@@ -4,7 +4,7 @@ public final class JSON {
     private final static com.google.gson.Gson GSON 
 	= new com.google.gson.Gson();
 
-    static final class Order {
+    public static final class Order {
 	private int order_type;
 	private double price;
 	private double amount;
@@ -38,7 +38,7 @@ public final class JSON {
 	return GSON.fromJson(s, JSON.Order.class);
     }
 
-    static final class Trade {
+    public static final class Trade {
 	private double price;
 	private double amount;
 	private String id;
@@ -62,7 +62,7 @@ public final class JSON {
 	return GSON.fromJson(s, JSON.Trade.class);
     }
 
-    static final class Ob {
+    public static final class Ob {
 	private double[][] bids;
 	private double[][] asks;
 
