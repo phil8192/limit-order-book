@@ -760,11 +760,6 @@ public final class LinkedOrderBook implements OrderBook {
     }
 
     /* completeFill = true if cancel event has 0 volume */
-    /*
-      public void remOrder(final String id, final int orderId, final OrderType type, final long localTimestamp,
-      final boolean completeFill, final double price) {
-    */
-
     public void delOrder(final String src, final String id, final int orderId, final OrderType type,
 			 final long exchangeTimestamp, final long localTimestamp,
 			 final double volume, final double price) {
