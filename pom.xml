@@ -113,7 +113,7 @@
     <dependency>
       <groupId>com.pusher</groupId>
       <artifactId>pusher-java-client</artifactId>
-      <version>0.2.2</version>
+      <version>0.3.1</version>
     </dependency>
   </dependencies>
 
