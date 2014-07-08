@@ -459,44 +459,6 @@ public final class LinkedOrderBook implements OrderBook {
 	return p;
     }
 
-    /*
-      private Percentile getPercentileVwap(final Limit best, final double percentile) {
-      int orders = 0;
-      int priceLevels = 0;
-      long vwapSum = 0;
-      long volume = 0;
-      int vwap = 0;
-
-      if(best!=null) {
-
-      final int bestPrice = best.getPrice();
-      Limit l = best;
-	    
-      do { 
-      final int price = l.getPrice();
-	    
-      if(Math.abs((bestPrice-price)/(double)bestPrice) > percentile) {
-      break;
-      }
-	    
-      orders += l.getOrders();
-      priceLevels++;
-		
-      final long levelVolume = l.getVolume();
-	    
-      vwapSum += levelVolume*price;
-      volume += levelVolume;	    
-
-      l = l.getRightSibling();
-		
-      } while(l != null);
-
-      vwap = (int) Math.round(vwapSum / (double)volume);
-      }
-      return new Percentile(vwap, orders, priceLevels, volume);
-      }
-    */
-
     public void addOrder(final String src, final String id, final int orderId, final OrderType type,
 			 final long exchangeTimestamp, final long localTimestamp,
 			 final double volume, final double price) {
@@ -937,43 +899,16 @@ public final class LinkedOrderBook implements OrderBook {
     }
 
     public String toString() {
-	
 	final StringBuilder sb = new StringBuilder();
-
 	final Limit[] bids = this.bids.getLevels(depth);
 	final Limit bestBid = this.bids.getBest();
-	//final int bidOrders = this.bids.getOrders();
-	
 	final Limit[] asks = this.asks.getLevels(depth);
 	final Limit bestAsk = this.asks.getBest();
-	//final int askOrders = this.asks.getOrders();
-       
-
-
-
-	//---
-	//final double vwapLim = 5; //% +- within best bid/ask       
-	//double bidWSum = 0, askWSum = 0;
-	//long bidVolVwapSum = 0, askVolVwapSum = 0;
-	//int bidOrdersLim = 0, askOrdersLim = 0; //within percentile
-
-	//---
-
-
-
 	long bidVolSum = 0, askVolSum = 0;
-
-	//sb.append(formatBidLevel(0d, 0l, bestBid))
-	//    .append(" | ")
-	//    .append(formatAskLevel(0d, 0l, bestAsk))
-	//    .append("\n=============================================================================================================\n");
-	
 	final Iterator<Sale> t_and_s_it = t_and_s.descendingIterator();
-	
 	for(int i = 0; i < depth; i++) {
 	    final Limit bid = bids[i];
 	    final Limit ask = asks[i];
-            
 	    final double bidPer;
 	    if(bid!=null){
 		final long bidVolume = bid.getVolume();
@@ -981,20 +916,9 @@ public final class LinkedOrderBook implements OrderBook {
 		final int best = bestBid.getPrice();
 		bidVolSum+=bidVolume;
 		bidPer=100*((best-bidPrice)/(double)best);
-		
-		//---
-		//if(bidPer <= vwapLim) {
-		//    bidWSum+=bidVolume*bidPrice;
-		//    bidVolVwapSum+=bidVolume;
-		//    bidOrdersLim+=bid.getOrders();
-		//}
-		//---
-
 	    }else{
 		bidPer = 0;
 	    }
-	    
-
 	    final double askPer;
 	    if(ask!=null){
 		final long askVolume = ask.getVolume();
@@ -1002,132 +926,20 @@ public final class LinkedOrderBook implements OrderBook {
 		final int best = bestAsk.getPrice();
 		askVolSum+=askVolume;
 		askPer=100*((askPrice-best)/(double)askPrice);
-
-		//---
-		//if(askPer <= vwapLim) {
-		//    askWSum+=askVolume*askPrice;
-		//    askVolVwapSum+=askVolume;
-		//    askOrdersLim+=ask.getOrders();
-		//}
-		//---
-
 	    }else{
 		askPer = 0;
 	    }
-	    
 	    sb.append(formatBidLevel(bidPer, bidVolSum, bid))
 		.append(" | ")
 		.append(formatAskLevel(askPer, askVolSum, ask));
-	    
 	    if(t_and_s_it.hasNext()) {
 		final Sale sale = t_and_s_it.next();
 		sb.append(" ").append(sale);
 	    }
-
 	    sb.append("\n");
-        
 	}
-	
-	//---
-	//final double bidVWAP;
-	//if(bidVolSum != 0)
-	//    bidVWAP = 0.01*(bidWSum/bidVolVwapSum);
-	//else 
-	//    bidVWAP = 0.0;
-	//final double askVWAP;
-	//if(askVolSum != 0)
-	//    askVWAP = 0.01*(askWSum/askVolVwapSum);
-	//else
-	//    askVWAP = 0.0;
-	//---
-
-
-	/*
-	  final String bbID;
-	  final String bestBidPrice;
-	  if(bestBid!=null) {
-	  bbID=bestBid.getHead().getOrder().getId();
-	  bestBidPrice = Util.asUSD(bestBid.getPrice());
-	  }else {
-	  bbID="NA";
-	  bestBidPrice = "1";
-	  }
-
-	  final String baID;
-	  final String bestAskPrice;
-	  if(bestAsk!=null) {
-	  baID=bestAsk.getHead().getOrder().getId();
-	  bestAskPrice = Util.asUSD(bestAsk.getPrice());
-	  }else{
-	  baID="NA";
-	  bestAskPrice = "1";
-	  }
-
-	  final Sale lastSale = t_and_s.getLast();
-	  final double lastPrice, Si, Bi, sobiBuy, sobiSell;
-	  if(lastSale!=null) {
-	  lastPrice = Util.asUSD(lastSale.getPrice());
-	  Si = askVWAP - lastPrice;
-	  Bi = lastPrice - bidVWAP;
-	  sobiBuy = Si - Bi;
-	  sobiSell = Bi - Si;
-	  }else {
-	  Si = 1;
-	  Bi = 1;
-	  sobiBuy = 1;
-	  sobiSell = 1;
-	  lastPrice = 1;
-	  }
-	
-	  sb.append("=============================================================================================================\n")
-	  .append("#buyers|#sellers = ")
-	  .append(bidOrders).append("|").append(askOrders)
-	  .append(" ; bid VWAP|ask VWAP <= ").append(vwapLim).append("% = ")
-	  .append(String.format("%.2f", bidVWAP)).append("|")
-	  .append(String.format("%.2f", askVWAP)).append("\n")
-	  .append("best bid order id = ").append(bbID).append(" best ask order id = ").append(baID)
-	  .append("\n#buyers|#sellers <= ").append(vwapLim).append("% = ")
-	  .append(bidOrdersLim).append("|").append(askOrdersLim).append(" ; bid|ask <% vol = ")
-	  .append(Util.asBTC(bidVolVwapSum)).append("|").append(Util.asBTC(askVolVwapSum)).append("\n")
-	  .append("buy market orders = ").append(buyMarketOrders.size())
-	  .append(" | sell market orders = ").append(sellMarketOrders.size())
-	  .append(". #pivot = ").append(pivot).append("\n")
-	  .append("SOBI: Bi|Si = ").append(String.format("%.2f", Bi)).append("|").append(String.format("%.2f", Si))
-	  .append(" Buy|Sell = ").append(String.format("%.2f", sobiBuy)).append("|").append(String.format("%.2f", sobiSell))
-	  .append(" Bi/Si = ").append(String.format("%.2f", (Bi/Si)))
-	  .append("\n=============================================================================================================\n")
-	  .append("");//.append(state);
-	*/
-
-	// lastPrice,bestBid,bestAsk,bidVwap,askVwap,Bi,Si,sobiBuy,sobiSell
-	/*
-	  final StringBuilder ob_tick = new StringBuilder();
-	  ob_tick.append("ob_tick,")
-	  .append(String.format("%.2f",lastPrice))
-	  .append(",")
-	  .append(bestBidPrice)
-	  .append(",")
-	  .append(bestAskPrice)
-	  .append(",")
-	  .append(String.format("%.2f", bidVWAP))
-	  .append(",")
-	  .append(String.format("%.2f", askVWAP))
-	  .append(",")
-	  .append(String.format("%.2f", Bi))
-	  .append(",")
-	  .append(String.format("%.2f", Si))
-	  .append(",")
-	  .append(String.format("%.2f", sobiBuy))
-	  .append(",")
-	  .append(String.format("%.2f", sobiSell));
-	*/
-	//System.err.println(ob_tick);
-
-	sb.append("=============================================================================================================\n")
-	    .append(state);
-
-	
-	return sb.toString();
+	return sb.append("=============================================================================================================\n")
+	    .append(state).toString();
     }
 
 }

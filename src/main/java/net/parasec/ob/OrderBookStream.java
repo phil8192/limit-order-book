@@ -34,14 +34,6 @@ public final class OrderBookStream implements StreamListener {
     }
 
     public void onDelOrder(final JSON.Order o) {
-	/*
-	  final boolean completeFill = (0.0 == o.getAmount());
-	  final double price = o.getPrice();
-	  ob.remOrder(Integer.toString(o.getId()), o.getId(), getType(o.getType()), System.currentTimeMillis(),
-	  completeFill, price);
-	  evt.onUpdate(ob);
-	*/
-
 	final int orderId = o.getId();
 	ob.delOrder(SRC, Integer.toString(orderId), orderId, getType(o.getType()), o.getDatetime(), 
 		    System.currentTimeMillis(), o.getAmount(), o.getPrice());
