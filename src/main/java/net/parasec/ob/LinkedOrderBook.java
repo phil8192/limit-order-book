@@ -3,6 +3,7 @@ package net.parasec.ob;
 import net.parasec.trading.ticker.core.wire.OrderEvent;
 import net.parasec.trading.ticker.core.wire.OrderInfo;
 import net.parasec.trading.ticker.core.wire.Direction;
+import net.parasec.trading.ticker.core.wire.Trade;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ public final class LinkedOrderBook implements OrderBook {
 
     private final int depth = 45;
     // last 100 t&s (trades) derived from order book.
-    private final ArrayDeque<Sale> t_and_s = new ArrayDeque<Sale>(100);
+    private final ArrayDeque<Trade> t_and_s = new ArrayDeque<Trade>(100);
 
     // last 100 cancels (with vol >0)
     private final ArrayDeque<Cancel> lastCancels = new ArrayDeque<Cancel>(100);
@@ -149,10 +150,10 @@ public final class LinkedOrderBook implements OrderBook {
 
     private long getMaxTrade(final Direction type) {
 	long max = 0;
-	for(final Sale s : t_and_s) {
-	    if(!type.equals(s.getType()))
+	for(final Trade s : t_and_s) {
+	    if(!type.equals(s.getDirection()))
 		continue;
-	    final long volume = s.getAmount();
+	    final long volume = s.getVolume();
 	    if(volume > max) {
 		max = volume;
 	    }
@@ -224,8 +225,8 @@ public final class LinkedOrderBook implements OrderBook {
 	lastOrders.addLast(mo);
     }
 	
-    public void addSale(final Sale s) {
-	final long volumeRemoved = s.getAmount();
+    public void addSale(final Trade s) {
+	final long volumeRemoved = s.getVolume();
 	final int price = s.getPrice();
 
 	if(price > state.highestPrice) {
@@ -235,9 +236,9 @@ public final class LinkedOrderBook implements OrderBook {
 	}
 	
 	if(t_and_s.size() == 100) {
-	    final Sale first = t_and_s.removeFirst();
+	    final Trade first = t_and_s.removeFirst();
 	    final long firstVol = first.getAmount();
-	    if(first.getType().equals(Direction.BUY)) {
+	    if(first.getDriection().equals(Direction.BUY)) {
 		if(firstVol == state.moLast100BuyTradeMax) {
 		    state.moLast100BuyTradeMax = getMaxTrade(Direction.BUY);
 		}
@@ -295,12 +296,12 @@ public final class LinkedOrderBook implements OrderBook {
 	return orphanedVolume;
     }
 
-    private void prune(final Sale s, Orders orders) {
+    private void prune(final Trade s, Orders orders) {
 	final Limit best = orders.getBest();
 	if(best!=null) {
 	    final int hitOrderId = s.getMakerId();
 	    final int existingOrders = best.getOrders();
-	    if(s.getType().equals(Direction.BUY)) {
+	    if(s.getDirection().equals(Direction.BUY)) {
 		if(s.getPrice() > best.getPrice()) {
 		    // ask side.
 		    state.totalAskVol -= removeOrphanedOrders(best, orders, hitOrderId);
@@ -578,7 +579,7 @@ public final class LinkedOrderBook implements OrderBook {
 			// be the tip of the knife so to speak).
 			final int takerId = getFirstKey(sellMarketOrders);
 			final int makerId = Integer.parseInt(o.getexchangeOrderId());
-			final Sale s = new Sale(priceIdx, volRemoved, Direction.SELL, takerId, makerId);
+			final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId); 
 			addSale(s);
 		    }
 		}
@@ -645,7 +646,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    } else if(volRemoved > 0) {
 			final int takerId = getFirstKey(buyMarketOrders);
 			final int makerId = Integer.parseInt(o.getexchangeOrderId());
-			final Sale s = new Sale(priceIdx, volRemoved, Direction.BUY, takerId, makerId);
+		        final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    }
 		}
@@ -684,7 +685,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    if(completeFill) {
 			final int takerId = getFirstKey(sellMarketOrders);
 			final int makerId = orderId;
-			final Sale s = new Sale(Util.asCents(price), volRemoved, Direction.SELL, takerId, makerId);
+		        final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    } else {
 			// trader removed after a partial fill or cancelled before any fill
@@ -710,7 +711,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    if(completeFill){
 			final int takerId = getFirstKey(buyMarketOrders);
 			final int makerId = orderId;
-			final Sale s = new Sale(Util.asCents(price), volRemoved, Direction.BUY, takerId, makerId);
+			final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    } else {
 			addCancel(new Cancel(id, Direction.SELL, volRemoved));
@@ -733,7 +734,7 @@ public final class LinkedOrderBook implements OrderBook {
 	return asks;
     }
 
-    public Sale getLastTrade() {
+    public Trade getLastTrade() {
 	return t_and_s.getLast();
     }
 
@@ -766,7 +767,7 @@ public final class LinkedOrderBook implements OrderBook {
 	final Limit[] asks = this.asks.getLevels(depth);
 	final Limit bestAsk = this.asks.getBest();
 	long bidVolSum = 0, askVolSum = 0;
-	final Iterator<Sale> t_and_s_it = t_and_s.descendingIterator();
+	final Iterator<Trade> t_and_s_it = t_and_s.descendingIterator();
 	for(int i = 0; i < depth; i++) {
 	    final Limit bid = bids[i];
 	    final Limit ask = asks[i];
@@ -794,7 +795,7 @@ public final class LinkedOrderBook implements OrderBook {
 		.append(" | ")
 		.append(formatAskLevel(askPer, askVolSum, ask));
 	    if(t_and_s_it.hasNext()) {
-		final Sale sale = t_and_s_it.next();
+		final Trade sale = t_and_s_it.next();
 		sb.append(" ").append(sale);
 	    }
 	    sb.append("\n");

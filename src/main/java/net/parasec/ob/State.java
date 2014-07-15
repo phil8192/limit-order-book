@@ -1,5 +1,8 @@
 package net.parasec.ob;
 
+import net.parasec.trading.ticker.core.wire.Trade;
+
+
 // updated on every tick
 
 public final class State {
@@ -7,7 +10,7 @@ public final class State {
     public long event = 0;
 
     public long ts=0; // current time milliseconds
-    public Sale lastTrade=null;
+    public Trade lastTrade=null;
   
     //public long lastTradeTs=0;
     //public int lastPrice=0;
@@ -94,7 +97,7 @@ public final class State {
 		.append("state,")
 		.append(event).append(dl)
 		.append(ts).append(dl)
-		.append(lastTrade!=null ? lastTrade.toCsv(dl) : ",,,,,")
+		.append(lastTrade!=null ? Util.tradeToCsv(lastTrade, dl) : ",,,,,")
 		.append(dl)
 		.append(moActiveBuys).append(dl)
 		.append(moActiveSells).append(dl)
@@ -157,7 +160,7 @@ public final class State {
 	    if(lastTrade==null){
 		sb.append(" none");
 	    } else { 
-		sb.append(" ts = ").append(lastTrade.getTs()).append(" type = ").append(lastTrade.getType().name()).append(" amount = ").append(Util.asBTC(lastTrade.getAmount())).append(" btc").append(" @ $").append(Util.asUSD(lastTrade.getPrice())).append(" taker = ").append(lastTrade.getTakerId()).append(" maker = ").append(lastTrade.getMakerId());
+		sb.append(" ts = ").append(lastTrade.getExchangeTimestamp()).append(" type = ").append(lastTrade.getDirection().name()).append(" amount = ").append(Util.asBTC(lastTrade.getVolume())).append(" btc").append(" @ $").append(Util.asUSD(lastTrade.getPrice())).append(" taker = ").append(lastTrade.getTakerIdentifier()).append(" maker = ").append(lastTrade.getMakerIdentifier());
 	    }
 	    sb.append(nl);
 
