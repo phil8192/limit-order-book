@@ -1,11 +1,14 @@
 package net.parasec.ob;
 
+import net.parasec.trading.ticker.core.wire.Direction;
+
+
 public final class Cancel {
     private String id;
-    private OrderType type;
+    private Direction type;
     private long amount;
 
-    public Cancel(final String id, final OrderType type, final long amount) {
+    public Cancel(final String id, final Direction type, final long amount) {
 	this.id = id;
 	this.type = type;
 	this.amount = amount;
@@ -15,7 +18,7 @@ public final class Cancel {
 	return id;
     }
 
-    public OrderType getType() {
+    public Direction getType() {
 	return type;
     }
 

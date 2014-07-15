@@ -1,9 +1,13 @@
 package net.parasec.ob;
 
+import net.parasec.trading.ticker.core.wire.OrderInfo;
+import net.parasec.trading.ticker.core.wire.Direction;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+
 
 public final class Orders {
 
@@ -41,8 +45,8 @@ public final class Orders {
 
 
     // order type will determine the direction to search.
-    public Orders(final OrderType type, final DepthListener depthListener) {
-	this.direction = type.equals(OrderType.BUY) ? 1 : -1;
+    public Orders(final Direction type, final DepthListener depthListener) {
+	this.direction = type.equals(Direction.BUY) ? 1 : -1;
 	if(depthListener==null){
 	    this.depthListener = (new DepthListener() {
 		    public void onBestChanged(final Limit l){}
@@ -117,7 +121,7 @@ public final class Orders {
     }
 
     public void addOrder(final OrderInfo order) {
-	final String id = order.getId();
+	final String id = order.getexchangeOrderId();
 
 	if(orderPool.containsKey(id)) {
 	    // if the active order pool already contains this order id, we have received a 
@@ -132,7 +136,7 @@ public final class Orders {
 
     private void addNewOrder(final OrderInfo order) {
 	final int priceIdx = order.getPrice();
-	final int orderId = order.getOrderId();
+	final int orderId = Integer.parseInt(order.getexchangeOrderId());
 
 	Limit p = sparseLevels[priceIdx];
 	final LimitOrder o;
@@ -155,7 +159,7 @@ public final class Orders {
 		
 	    // keep looking left until we find the left sibling (ls order_id < new order_id)
 	    LimitOrder ls = p.getLast();
-	    while(ls != null && ls.getOrder().getOrderId() > orderId) {
+	    while(ls != null && Integer.parseInt(ls.getOrder().getexchangeOrderId()) > orderId) {
 		ls = ls.getLeftSibling();
 	    }
 		
@@ -185,11 +189,11 @@ public final class Orders {
 	p.setOrders(p.getOrders() + 1).setVolume(p.getVolume() + order.getVolume());
 
 	// add the new order (id) to the active order pool.
-	orderPool.put(order.getId(), o);
+	orderPool.put(order.getexchangeOrderId(), o);
     }
 
     public long modOrder(final OrderInfo order) {
-	final String id = order.getId();
+	final String id = order.getexchangeOrderId();
 
 	final LimitOrder o = orderPool.get(id);
 	if(o == null) {
@@ -216,9 +220,7 @@ public final class Orders {
 	final Limit parent = o.getParent();
 	parent.setVolume(parent.getVolume() - delta);
 
-
-	assert delta > 0 : "error: "+o.getOrder().getId();
-	
+	assert delta > 0 : "error: "+o.getOrder().getexchangeOrderId();
 
 	return delta;
     }
@@ -368,7 +370,6 @@ public final class Orders {
         final Iterator<Map.Entry<String,MarketOrder>> it = activeMarketOrders.entrySet().iterator(); 
 	final Mic mic = this.mic;
 
-	System.err.println("-- market impact --");
 	while(it.hasNext()) {
 
 	    final OrderInfo o = it.next().getValue().getOrder();
@@ -382,15 +383,11 @@ public final class Orders {
 
 		impact = l.getPrice();
 		
-		System.err.println(o + " = " + Util.asUSD(impact));
-
 		if(mic.exceedsLimit(impact, priceLimit)) {
 		    
 		    if(last != null) {
 			impact = last.getPrice();
 		    }
-		    
-		    System.err.println("exceeds. back to: " + Util.asUSD(impact));
 		    
 		    break;
 		} 
@@ -400,7 +397,6 @@ public final class Orders {
        
 		if(volSum >= orderVolume) {
 		    offset = (volSum - orderVolume) - levelVolume;
-		    System.err.println("found. offst: " + Util.asBTC(offset));
 		    break;
 		}
 		

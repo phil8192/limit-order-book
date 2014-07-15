@@ -1,14 +1,19 @@
 package net.parasec.ob;
 
+import net.parasec.trading.ticker.core.wire.OrderEvent;
+import net.parasec.trading.ticker.core.wire.OrderInfo;
+import net.parasec.trading.ticker.core.wire.Direction;
+
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 
+
 public final class LinkedOrderBook implements OrderBook {
 
-    private long firstNewOrderTs = 4102444800L; // Fri Jan  1 00:00:00 UTC 2100
+  private long firstNewOrderTs = 4102444800L; // Fri Jan  1 00:00:00 UTC 2100
 
     private final State state = new State();
     private final ArrayDeque<MarketOrder> lastOrders = new ArrayDeque<MarketOrder>(100);
@@ -57,18 +62,14 @@ public final class LinkedOrderBook implements OrderBook {
 	if(o.getPrice() < bestAskPrice) {
 	    final long unFilledVolume = o.getVolume();
 	    final long filledVolume = mo.getInitialVolume() - unFilledVolume;
-
 	    if(filledVolume == 0)
 		return false;		
-
 	    bids.modOrder(o);
-
 	    mo.setFilledVolume(filledVolume);
 	    state.moActiveBuys--;
 	    state.moOutstandingBuyVolume -= unFilledVolume;
 	    state.totalBids++;
 	    state.totalBidVol += unFilledVolume;	
-
 	    addFilledMo(mo);
 	    return true;
 	}
@@ -89,7 +90,6 @@ public final class LinkedOrderBook implements OrderBook {
 	    state.moOutstandingSellVolume -= unFilledVolume;
 	    state.totalAsks++;
 	    state.totalAskVol += unFilledVolume;
-	    System.err.println("debug: 4. add filled sell mo " + o.getId());
 	    addFilledMo(mo);
 	    return true;
 	}
@@ -105,52 +105,40 @@ public final class LinkedOrderBook implements OrderBook {
     // the best bid/ask at the final price level. we wait until the best bid/ask
     // has changed because there is no guarantee which event will arrive first:
     // partial fill update, or cancel/fill update on other side of book.
-    private final Orders asks = new Orders(OrderType.SELL, new DepthListener() {
-
+    private final Orders asks = new Orders(Direction.SELL, new DepthListener() {
 	    public void onBestChanged(final Limit l) {
-
 		state.bestAsk = l;
-
 		// best ask has changed. iterate through current market orders,
 		// if market order target price < best ask, hand market order over
 		// to order book as a limit order.
 		for(final Iterator<Map.Entry<String,MarketOrder>> it 
 			= buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 		    final MarketOrder mo = it.next().getValue();
-
 		    if(pruneBuyMo(mo)) {
-			System.err.println("debug: pruned buy mo: " + mo.getOrder().toString());
 			it.remove();
-
 		    }
 		}	
 	    }
 	});
-    private final Orders bids = new Orders(OrderType.BUY, new DepthListener() {
+    private final Orders bids = new Orders(Direction.BUY, new DepthListener() {
 	    public void onBestChanged(final Limit l) {
-
 		state.bestBid = l;
-
 		// best bid has changed. same logic as ask.
 		for(final Iterator<Map.Entry<String,MarketOrder>> it 
 			= sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 		    final MarketOrder mo = it.next().getValue();
-
 		    if(pruneSellMo(mo)) {
-			System.err.println("debug: pruned sell mo: " + mo.getOrder().toString());
 			it.remove();
 		    }
 		}
 	    } 
 	});
 
-    private long getMaxFill(final OrderType type) {	
+    private long getMaxFill(final Direction type) {	
 	long max = 0;
 	for(final MarketOrder mo : lastOrders) {
-	    
 	    if(!type.equals(mo.getOrder().getType()))
 		continue;
-
 	    final long volume = mo.getFilledVolume();
 	    if(volume > max) {
 		max = volume;
@@ -159,13 +147,11 @@ public final class LinkedOrderBook implements OrderBook {
 	return max;
     }
 
-    private long getMaxTrade(final OrderType type) {
+    private long getMaxTrade(final Direction type) {
 	long max = 0;
 	for(final Sale s : t_and_s) {
-	    
 	    if(!type.equals(s.getType()))
 		continue;
-
 	    final long volume = s.getAmount();
 	    if(volume > max) {
 		max = volume;
@@ -174,13 +160,11 @@ public final class LinkedOrderBook implements OrderBook {
 	return max;
     }
 
-    private long getMaxCancel(final OrderType type) {
+    private long getMaxCancel(final Direction type) {
 	long max = 0;
 	for(final Cancel c : lastCancels) {
-	    
 	    if(!type.equals(c.getType()))
 		continue;
-
 	    final long volume = c.getAmount();
 	    if(volume > max) {
 		max = volume;
@@ -194,20 +178,20 @@ public final class LinkedOrderBook implements OrderBook {
 	if(lastOrders.size() == 100) {
 	    final MarketOrder first = lastOrders.removeFirst();
 	    final long firstFilledVolume = first.getFilledVolume();
-	    if(first.getOrder().getType().equals(OrderType.BUY)) {
+	    if(first.getOrder().getType().equals(Direction.BUY)) {
 		state.moLast100BuyVol -= firstFilledVolume;
 		if(firstFilledVolume == state.moLast100BuyMax) {
-		    state.moLast100BuyMax = getMaxFill(OrderType.BUY);
+		    state.moLast100BuyMax = getMaxFill(Direction.BUY);
 		}
 		state.moLast100Buy--;
 	    } else {
 		state.moLast100SellVol -= firstFilledVolume;
 		if(firstFilledVolume == state.moLast100SellMax) {
-		    state.moLast100SellMax = getMaxFill(OrderType.SELL);
+		    state.moLast100SellMax = getMaxFill(Direction.SELL);
 		}
 	    }
 	}
-	if(mo.getOrder().getType().equals(OrderType.BUY)) {
+	if(mo.getOrder().getType().equals(Direction.BUY)) {
 	    state.moLast100BuyVol += filledVolume;
 	    if(filledVolume > state.moLast100BuyMax) {
 		state.moLast100BuyMax = filledVolume;
@@ -244,7 +228,6 @@ public final class LinkedOrderBook implements OrderBook {
 	final long volumeRemoved = s.getAmount();
 	final int price = s.getPrice();
 
-	
 	if(price > state.highestPrice) {
 	    state.highestPrice = price;
 	} else if(price < state.lowestPrice) {
@@ -252,63 +235,46 @@ public final class LinkedOrderBook implements OrderBook {
 	}
 	
 	if(t_and_s.size() == 100) {
-	    
 	    final Sale first = t_and_s.removeFirst();
 	    final long firstVol = first.getAmount();
-	    
-	    if(first.getType().equals(OrderType.BUY)) {
-	
+	    if(first.getType().equals(Direction.BUY)) {
 		if(firstVol == state.moLast100BuyTradeMax) {
-		    state.moLast100BuyTradeMax = getMaxTrade(OrderType.BUY);
+		    state.moLast100BuyTradeMax = getMaxTrade(Direction.BUY);
 		}
-
 		state.moLast100BuyTrades--;
 		state.moLast100BuyTradeVol -= firstVol;
-	
 	    } else {
-		
 		if(firstVol == state.moLast100SellTradeMax) {
-		    state.moLast100SellTradeMax = getMaxTrade(OrderType.SELL);
+		    state.moLast100SellTradeMax = getMaxTrade(Direction.SELL);
 		}
-
 		state.moLast100SellTradeVol -= firstVol;
 	    }
 	}
 
-	if(s.getType().equals(OrderType.BUY)) {
-
+	if(s.getType().equals(Direction.BUY)) {
 	    if(volumeRemoved > state.moLast100BuyTradeMax) {
 		state.moLast100BuyTradeMax = volumeRemoved;
 	    }
-
 	    state.moLast100BuyTrades++;
 	    state.moLast100BuyTradeVol += volumeRemoved;	        
-
 	    state.totalAskVol -= volumeRemoved;    
 	    prune(s, asks);
-	    //state.askPercentile = getPercentileVwap(state.bestAsk, 0.05);
 	    state.askPercentile = getPercentileVwap(state.bestAsk, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 	    state.buyImpact = asks.getMarketImpact(State.impactPoints);
-
 	} else {
-
 	    if(volumeRemoved > state.moLast100SellTradeMax) {
 		state.moLast100SellTradeMax = volumeRemoved;
 	    }
-
 	    state.moLast100SellTradeVol += volumeRemoved;
 	    state.totalBidVol -= volumeRemoved;
 	    prune(s, bids);
-	    //state.bidPercentile = getPercentileVwap(state.bestBid, 0.05);
 	    state.bidPercentile = getPercentileVwap(state.bestBid, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 	    state.sellImpact = bids.getMarketImpact(State.impactPoints);
 	}
-
 	state.event++;
 	state.ts = System.currentTimeMillis();
 	state.lastTrade = s;
 	t_and_s.addLast(s);
-
     }
     
 
@@ -319,8 +285,8 @@ public final class LinkedOrderBook implements OrderBook {
 	while(lo!=null) {
 	    final LimitOrder next = lo.getRightSibling();
 	    final OrderInfo o = lo.getOrder();
-	    if(o.getOrderId() < hitOrderId) { 
-		final String id = o.getId();
+	    if(Integer.parseInt(o.getexchangeOrderId()) < hitOrderId) { 
+		final String id = o.getexchangeOrderId();
 		orphanedVolume += orders.remOrder(id, System.currentTimeMillis());
 		orders.getDeadPool().add(id);
 	    }
@@ -334,7 +300,7 @@ public final class LinkedOrderBook implements OrderBook {
 	if(best!=null) {
 	    final int hitOrderId = s.getMakerId();
 	    final int existingOrders = best.getOrders();
-	    if(s.getType().equals(OrderType.BUY)) {
+	    if(s.getType().equals(Direction.BUY)) {
 		if(s.getPrice() > best.getPrice()) {
 		    // ask side.
 		    state.totalAskVol -= removeOrphanedOrders(best, orders, hitOrderId);
@@ -358,10 +324,10 @@ public final class LinkedOrderBook implements OrderBook {
 	    final Cancel first = lastCancels.removeFirst();
 	    final long firstVol = first.getAmount();
 	    
-	    if(first.getType().equals(OrderType.BUY)) {
+	    if(first.getType().equals(Direction.BUY)) {
 	
 		if(firstVol == state.bidLast100CancelMax) {
-		    state.bidLast100CancelMax = getMaxCancel(OrderType.BUY);
+		    state.bidLast100CancelMax = getMaxCancel(Direction.BUY);
 		}
 
 		state.bidLast100Cancel--;
@@ -370,14 +336,14 @@ public final class LinkedOrderBook implements OrderBook {
 	    } else {
 		
 		if(firstVol == state.askLast100CancelMax) {
-		    state.askLast100CancelMax = getMaxCancel(OrderType.SELL);
+		    state.askLast100CancelMax = getMaxCancel(Direction.SELL);
 		}
 
 		state.askLast100CancelVolume -= firstVol;
 	    }
 	}
 
-	if(c.getType().equals(OrderType.BUY)) {
+	if(c.getType().equals(Direction.BUY)) {
 
 	    if(volumeCancelled > state.bidLast100CancelMax) {
 		state.bidLast100CancelMax = volumeCancelled;
@@ -460,22 +426,17 @@ public final class LinkedOrderBook implements OrderBook {
 	return p;
     }
 
-    public void addOrder(final String src, final String id, final int orderId, final OrderType type,
-			 final long exchangeTimestamp, final long localTimestamp,
-			 final double volume, final double price) {
-  
-        if(firstNewOrderTs == 4102444800L)
-          firstNewOrderTs = oe.getOrderInfo().getExchangeTimestamp();
+  public void addOrder(final OrderEvent oe) {
+       final OrderInfo o = oe.getOrderInfo();    
 
- 
-	final int priceIdx = Util.asCents(price);
-	final long volSatoshi = Util.asSatoshi(volume);
+       if(firstNewOrderTs == 4102444800L)
+           firstNewOrderTs = o.getExchangeTimestamp();
 
-	final OrderInfo o = new OrderInfo(src, id, orderId, exchangeTimestamp, localTimestamp, volSatoshi, priceIdx, type);
-
-	System.err.println("debug: 5. add order " + id + " " + o.toString());
+        final Direction type = oe.getDirection();
+	final int priceIdx = o.getLimitPrice(); 
+	final long volSatoshi = o.getVolume();
 	
-	if(type.equals(OrderType.BUY)) {
+	if(type.equals(Direction.BUY)) {
 
 	    if(bids.getDeadPool().contains(id))
 		return; // discard stale information.
@@ -484,34 +445,25 @@ public final class LinkedOrderBook implements OrderBook {
 	    if(best != null && best.getPrice() <= priceIdx) {
 		// book crossed: put in bid market order map.
 		if(!buyMarketOrders.containsKey(id)) {
-		    
-		    System.err.println("debug: 6. add " + id + " to mo buy map");
-
 		    buyMarketOrders.put(id, new MarketOrder(o));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveBuys++;
 		    state.moOutstandingBuyVolume+=volSatoshi;
 		    state.moBuyTip = asks.getMarketImpact(buyMarketOrders);
-		} else {
-		    System.err.println("debug: 7. " + id + " already in mo buy map");
-		}// else inserted before from modOrder(), discard stale information.
+		} 
+		// else inserted before from modOrder(), discard stale information.
 	    } else {
 		// put in buy side of limit order book.
-
-		System.err.println("debug: 8. add " + id + " to buy side of book");
-
 		bids.addOrder(o);	
 		state.event++;
 		state.ts = System.currentTimeMillis();
 		state.totalBids++;
 		state.totalBidVol += volSatoshi;
-		//state.bidPercentile = getPercentileVwap(state.bestBid, 0.05);
 		state.bidPercentile = getPercentileVwap(state.bestBid, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 		state.sellImpact = bids.getMarketImpact(State.impactPoints);
 	    }
 	}else{
-
 	    if(priceIdx >= 1000000) {
 		// ignore orders to sell >= 10k.
 		return;
@@ -525,52 +477,37 @@ public final class LinkedOrderBook implements OrderBook {
 
 		// book crossed: put in ask market order map.
 		if(!sellMarketOrders.containsKey(id)) {
-
-		    System.err.println("debug: 9. add " + id + " to mo sell map");
-
 		    sellMarketOrders.put(id, new MarketOrder(o));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveSells++;
 		    state.moOutstandingSellVolume+=volSatoshi;
 		    state.moSellTip = bids.getMarketImpact(sellMarketOrders);
-		}else{
-		    System.err.println("debug: 10. " + id + " already in mo buy map");
-		}// else inserted before from modOrder(), discard stale information.
+		}
 	    } else {
 		// put in ask side of limit order book.
-		
-		System.err.println("debug: 11. add " + id + " to sell side of book");
-
 		asks.addOrder(o);
 		state.event++;
 		state.ts = System.currentTimeMillis();
 		state.totalAsks++;
 		state.totalAskVol += volSatoshi;
-		//state.askPercentile = getPercentileVwap(state.bestAsk, 0.05);
 		state.askPercentile = getPercentileVwap(state.bestAsk, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 		state.buyImpact = asks.getMarketImpact(State.impactPoints);
 	    }
 	}
     }
 
+    public void modOrder(final OrderEvent oe) {
+        final OrderInfo o = oe.getOrderInfo();
 
-    public void modOrder(final String src, final String id, final int orderId, final OrderType type,
-			 final long exchangeTimestamp, final long localTimestamp,
-			 final double volume, final double price) {
+        if(o.getExchangeTimestamp() < firstNewOrderTs)
+            return;
 
-        if(oe.getOrderInfo().getExchangeTimestamp() < firstNewOrderTs)
-          return;
+        final Direction type = oe.getDirection();
+	final int priceIdx = o.getLimitPrice();
+        final long volSatoshi = o.getVolume();
 
-
-	final int priceIdx = Util.asCents(price);
-	final long volSatoshi = Util.asSatoshi(volume);
-
-	final OrderInfo o = new OrderInfo(src, id, orderId, exchangeTimestamp, localTimestamp, volSatoshi, priceIdx, type);
-
-	System.err.println("debug: 12. mod order " + id + " " + o.toString());
-
-	if(type.equals(OrderType.BUY)) {
+	if(type.equals(Direction.BUY)) {
 	    
 	    if(bids.getDeadPool().contains(id))
 		return;
@@ -587,14 +524,10 @@ public final class LinkedOrderBook implements OrderBook {
 		// update state
 		state.totalBids--;
 		state.totalBidVol -= volumeRemoved;
-		//state.bidPercentile = getPercentileVwap(state.bestBid, 0.05);
 		state.bidPercentile = getPercentileVwap(state.bestBid, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 		state.sellImpact = bids.getMarketImpact(State.impactPoints);
 
 		// add back as a new order.
-
-		System.err.println("debug: 13. instant order " + id + " modified in place. adding back to order book");
-
 		addOrder(src, id, orderId, type, exchangeTimestamp, localTimestamp, volume, price);
 		
 		return;
@@ -611,24 +544,15 @@ public final class LinkedOrderBook implements OrderBook {
 		    state.moOutstandingBuyVolume -= delta;
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
-
 		    if(pruneBuyMo(mo)) {
-			System.err.println("debug: pruned buy mo on mod: " + bmo.toString());
 			buyMarketOrders.remove(id);
 		    }
-
 		}
-
-		System.err.println("debug: 14. modified mo " + id + " " + bmo.toString());
-
 	    } else {
 		// if modified order results in crossed book, event has arrived out of order,
 		// (should have seen new order first) -add it to market orders map.
 		final Limit best = asks.getBest();
 		if(best != null && best.getPrice() <= priceIdx) {
-		    
-		    System.err.println("debug: 15. modified order " + id + " results in crossed book, adding to mo map");
-
 		    buyMarketOrders.put(id, new MarketOrder(o));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
@@ -636,16 +560,10 @@ public final class LinkedOrderBook implements OrderBook {
 		    state.moOutstandingBuyVolume+=volSatoshi;
 		    state.moBuyTip = asks.getMarketImpact(buyMarketOrders);
 		} else {
-		    
 		    // send it to limit order book.
-
-		    System.err.println("debug: 16. sending " + id + " " + o.toString() + " to order book");
 		    final long volRemoved = bids.modOrder(o);
 
 		    if(volRemoved == 0) {
-			
-			System.err.println("debug: 17. order " + id + " was inserted as new bid order");
-			
 			// was inserted as a new (bid) order.
 			state.event++;
 			state.ts = System.currentTimeMillis();
@@ -654,25 +572,18 @@ public final class LinkedOrderBook implements OrderBook {
 			//state.bidPercentile = getPercentileVwap(state.bestBid, 0.05);
 			state.bidPercentile = getPercentileVwap(state.bestBid, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 			state.sellImpact = bids.getMarketImpact(State.impactPoints);
-
 		    } else if(volRemoved > 0) {
-			
 			// a modified buy order, if in the order book, is a partial fill from some
 			// sell market order: liquidity is being removed. log a sale in t&s (will
 			// be the tip of the knife so to speak).
 			final int takerId = getFirstKey(sellMarketOrders);
-			final int makerId = o.getOrderId();
-			final Sale s = new Sale(priceIdx, volRemoved, OrderType.SELL, takerId, makerId);
-
-			System.err.println("debug: 18. partial fill of " + id + " adding trade: " + s.toString());
-
+			final int makerId = Integer.parseInt(o.getexchangeOrderId());
+			final Sale s = new Sale(priceIdx, volRemoved, Direction.SELL, takerId, makerId);
 			addSale(s);
-			
 		    }
 		}
 	    }
 	} else {
-
 	    if(asks.getDeadPool().contains(id))
 		return;
 
@@ -688,12 +599,8 @@ public final class LinkedOrderBook implements OrderBook {
 		// update state
 		state.totalAsks--;
 		state.totalAskVol -= volumeRemoved;
-		//state.askPercentile = getPercentileVwap(state.bestAsk, 0.05);
 		state.askPercentile = getPercentileVwap(state.bestAsk, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 		state.buyImpact = asks.getMarketImpact(State.impactPoints);
-
-		
-		System.err.println("debug: 19. instant order " + id + " modified in place. adding back to order book");
 
 		// add back as a new order.
 		addOrder(src, id, orderId, type, exchangeTimestamp, localTimestamp, volume, price);
@@ -711,22 +618,13 @@ public final class LinkedOrderBook implements OrderBook {
 		    state.moOutstandingSellVolume -= delta;
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
-		
 		    if(pruneSellMo(mo)) {
-			System.err.println("debug: pruned sell mo on mod: " + smo.toString());
 			sellMarketOrders.remove(id);
 		    }
-
 		}
-
-		System.err.println("debug: 20. modified mo " + id + " " + smo.toString());
-
 	    } else {
 		final Limit best = bids.getBest();
 		if(best != null && best.getPrice() >= priceIdx) {
-		    		    
-		    System.err.println("debug: 21. modified order " + id + " results in crossed book, adding to mo map");
-
 		    sellMarketOrders.put(id, new MarketOrder(o));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
@@ -734,34 +632,20 @@ public final class LinkedOrderBook implements OrderBook {
 		    state.moOutstandingSellVolume+=volSatoshi;
 		    state.moSellTip = bids.getMarketImpact(sellMarketOrders);
 	        } else {
-		    
-		    
-		    System.err.println("debug: 22. sending " + id + " " + o.toString() + " to order book");
 		    final long volRemoved = asks.modOrder(o);
 
 		    if(volRemoved == 0) {
-
-			System.err.println("debug: 23. order " + id + " was inserted as new ask order");
-
 			// was inserted as a new (ask) order.
 			state.event++;
 			state.ts = System.currentTimeMillis();
 			state.totalAsks++;
 			state.totalAskVol += volSatoshi;
-			//state.askPercentile = getPercentileVwap(state.bestAsk, 0.05);
 			state.askPercentile = getPercentileVwap(state.bestAsk, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 			state.buyImpact = asks.getMarketImpact(State.impactPoints);
-
 		    } else if(volRemoved > 0) {
-
-			/*........*/
-
 			final int takerId = getFirstKey(buyMarketOrders);
-			final int makerId = o.getOrderId();
-			final Sale s = new Sale(priceIdx, volRemoved, OrderType.BUY, takerId, makerId);
-			
-			System.err.println("debug: 24. partial fill of " + id + " adding trade: " + s.toString());
-		
+			final int makerId = Integer.parseInt(o.getexchangeOrderId());
+			final Sale s = new Sale(priceIdx, volRemoved, Direction.BUY, takerId, makerId);
 			addSale(s);
 		    }
 		}
@@ -769,26 +653,22 @@ public final class LinkedOrderBook implements OrderBook {
 	}
     }
 
-    /* completeFill = true if cancel event has 0 volume */
-    public void delOrder(final String src, final String id, final int orderId, final OrderType type,
-			 final long exchangeTimestamp, final long localTimestamp,
-			 final double volume, final double price) {
+    public void delOrder(final OrderEvent oe) {
+        final OrderInfo o = oe.getOrderInfo();
 
-        if(oe.getOrderInfo().getExchangeTimestamp() < firstNewOrderTs)
-          return;
+        if(o.getExchangeTimestamp() < firstNewOrderTs)
+            return;
 
+        final Direction type = oe.getDirection();
+        final int priceIdx = o.getLimitPrice();
+        final long volSatoshi = o.getVolume();
 
-
-	final boolean completeFill = (volume == 0.0);
+	final boolean completeFill = (volSatoshi == 0);
 
 	state.ts = System.currentTimeMillis();
 	  
-	System.err.println("debug: 25. delete order: " + id);
-  
-	if(type.equals(OrderType.BUY)) {
-	    
+	if(type.equals(Direction.BUY)) {
 	    bids.getDeadPool().add(id);
-
 	    if(buyMarketOrders.containsKey(id)) {
 		final MarketOrder mo = buyMarketOrders.remove(id);
 		final OrderInfo o = mo.getOrder();
@@ -797,40 +677,24 @@ public final class LinkedOrderBook implements OrderBook {
 		mo.setFilledVolume(filledVolume);
 		state.moActiveBuys--;
 		state.moOutstandingBuyVolume -= (completeFill ? o.getVolume() : unFilledVolume);
-
-		System.err.println("debug: 26. add filled mo " + id + " " + o.toString());
-	
 		addFilledMo(mo);
-
 	    } else { 
-	    
 		final long volRemoved = bids.remOrder(id, localTimestamp);
-	   
 		if(volRemoved > 0) { // -1 = unknown id.
-		    
 		    if(completeFill) {
 			final int takerId = getFirstKey(sellMarketOrders);
 			final int makerId = orderId;
-			final Sale s = new Sale(Util.asCents(price), volRemoved, OrderType.SELL, takerId, makerId);
-
-			System.err.println("debug: 27. add sale " + id + " " + s.toString());
-			
+			final Sale s = new Sale(Util.asCents(price), volRemoved, Direction.SELL, takerId, makerId);
 			addSale(s);
-			
 		    } else {
 			// trader removed after a partial fill or cancelled before any fill
-			System.err.println("debug: 28. add cancel " + id);
-
-			addCancel(new Cancel(id, OrderType.BUY, volRemoved));
+			addCancel(new Cancel(id, Direction.BUY, volRemoved));
 		    }
-
 		    state.totalBids--;
 		}
 	    }
 	} else {
-
 	    asks.getDeadPool().add(id);
-
 	    if(sellMarketOrders.containsKey(id)) {
 		final MarketOrder mo = sellMarketOrders.remove(id);
 		final OrderInfo o = mo.getOrder();
@@ -839,32 +703,18 @@ public final class LinkedOrderBook implements OrderBook {
 		mo.setFilledVolume(filledVolume);
 		state.moActiveSells--;
 		state.moOutstandingSellVolume -= (completeFill ? o.getVolume() : unFilledVolume);
-
-		System.err.println("debug: 29. add filled mo " + id + " " + o.toString());
-
 		addFilledMo(mo);
-	    
 	    } else {
-	    
 		final long volRemoved = asks.remOrder(id, localTimestamp);
-	   
 		if(volRemoved > 0) {
-		   
 		    if(completeFill){
 			final int takerId = getFirstKey(buyMarketOrders);
 			final int makerId = orderId;
-			final Sale s = new Sale(Util.asCents(price), volRemoved, OrderType.BUY, takerId, makerId);
-
-			
-			System.err.println("debug: 30. add sale " + id + " " + s.toString());
-
+			final Sale s = new Sale(Util.asCents(price), volRemoved, Direction.BUY, takerId, makerId);
 			addSale(s);
 		    } else {
-			System.err.println("debug: 31. add cancel " + id);
-
-			addCancel(new Cancel(id, OrderType.SELL, volRemoved));
+			addCancel(new Cancel(id, Direction.SELL, volRemoved));
 		    }
-
 		    state.totalAsks--;
 		}
 	    }
