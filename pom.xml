@@ -56,6 +56,13 @@
   </build>
 
   <dependencies>
+
+    <dependency>
+      <groupId>net.parasec.trading.ticker</groupId>
+      <artifactId>bitstamp-ticker</artifactId>
+      <version>1.0</version>
+    </dependency>
+
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>

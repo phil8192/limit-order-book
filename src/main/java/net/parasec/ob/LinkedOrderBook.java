@@ -8,6 +8,7 @@ import java.util.HashSet;
 
 public final class LinkedOrderBook implements OrderBook {
 
+    private long firstNewOrderTs = 4102444800L; // Fri Jan  1 00:00:00 UTC 2100
 
     private final State state = new State();
     private final ArrayDeque<MarketOrder> lastOrders = new ArrayDeque<MarketOrder>(100);
@@ -462,7 +463,11 @@ public final class LinkedOrderBook implements OrderBook {
     public void addOrder(final String src, final String id, final int orderId, final OrderType type,
 			 final long exchangeTimestamp, final long localTimestamp,
 			 final double volume, final double price) {
-   
+  
+        if(firstNewOrderTs == 4102444800L)
+          firstNewOrderTs = oe.getOrderInfo().getExchangeTimestamp();
+
+ 
 	final int priceIdx = Util.asCents(price);
 	final long volSatoshi = Util.asSatoshi(volume);
 
@@ -553,6 +558,11 @@ public final class LinkedOrderBook implements OrderBook {
     public void modOrder(final String src, final String id, final int orderId, final OrderType type,
 			 final long exchangeTimestamp, final long localTimestamp,
 			 final double volume, final double price) {
+
+        if(oe.getOrderInfo().getExchangeTimestamp() < firstNewOrderTs)
+          return;
+
+
 	final int priceIdx = Util.asCents(price);
 	final long volSatoshi = Util.asSatoshi(volume);
 
@@ -763,6 +773,12 @@ public final class LinkedOrderBook implements OrderBook {
     public void delOrder(final String src, final String id, final int orderId, final OrderType type,
 			 final long exchangeTimestamp, final long localTimestamp,
 			 final double volume, final double price) {
+
+        if(oe.getOrderInfo().getExchangeTimestamp() < firstNewOrderTs)
+          return;
+
+
+
 	final boolean completeFill = (volume == 0.0);
 
 	state.ts = System.currentTimeMillis();

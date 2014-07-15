@@ -1,11 +1,17 @@
 package net.parasec.ob;
 
-public interface OrderBook extends OMS {
+import net.parasec.trading.ticker.core.wire.OrderEvent;
 
-    State getState();
-    Orders getBids();
-    Orders getAsks();
+
+public interface OrderBook {
+
+  State getState();
+  Orders getBids();
+  Orders getAsks();
+
+  void addOrder(OrderEvent oe);
+  void modOrder(OrderEvent oe);
+  void delOrder(OrderEVent oe);
 
 }
-
 
