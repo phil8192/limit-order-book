@@ -135,7 +135,7 @@ public final class Orders {
     }
 
     private void addNewOrder(final OrderInfo order) {
-	final int priceIdx = order.getPrice();
+	final int priceIdx = order.getLimitPrice();
 	final int orderId = Integer.parseInt(order.getexchangeOrderId());
 
 	Limit p = sparseLevels[priceIdx];
@@ -225,7 +225,7 @@ public final class Orders {
 	return delta;
     }
 
-    public long remOrder(final String id, final long localTimestamp) {
+    public long remOrder(final String id) {
 	    
 	final LimitOrder o = orderPool.remove(id);
 	if(o == null) return -1;
@@ -373,7 +373,7 @@ public final class Orders {
 	while(it.hasNext()) {
 
 	    final OrderInfo o = it.next().getValue().getOrder();
-	    final int priceLimit = o.getPrice();
+	    final int priceLimit = o.getLimitPrice();
 	    final long orderVolume = o.getVolume();
 
 	    long volSum = offset;

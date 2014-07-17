@@ -50,17 +50,17 @@ public final class LinkedOrderBook implements OrderBook {
     private final HashSet<String> instantOrders = new HashSet<String>();
 
 
-    private int getFirstKey(final LinkedHashMap<String,MarketOrder> marketOrders) {
+    private String getFirstKey(final LinkedHashMap<String,MarketOrder> marketOrders) {
 	if(marketOrders.isEmpty())
-	    return 0; 
+	    return null; 
 	final Map.Entry<String, MarketOrder> me = marketOrders.entrySet().iterator().next();
-	return Integer.parseInt(me.getKey());
+	return me.getKey();
     }
     
     private boolean pruneBuyMo(final MarketOrder mo) {
 	final int bestAskPrice = state.bestAsk != null ? state.bestAsk.getPrice() : Integer.MAX_VALUE;
 	final OrderInfo o = mo.getOrder();
-	if(o.getPrice() < bestAskPrice) {
+	if(o.getLimitPrice() < bestAskPrice) {
 	    final long unFilledVolume = o.getVolume();
 	    final long filledVolume = mo.getInitialVolume() - unFilledVolume;
 	    if(filledVolume == 0)
@@ -80,7 +80,7 @@ public final class LinkedOrderBook implements OrderBook {
     private boolean pruneSellMo(final MarketOrder mo) {
 	final int bestBidPrice = state.bestBid != null ? state.bestBid.getPrice() : 0;
 	final OrderInfo o = mo.getOrder();
-	if(o.getPrice() > bestBidPrice) {
+	if(o.getLimitPrice() > bestBidPrice) {
 	    final long unFilledVolume = o.getVolume();
 	    final long filledVolume = mo.getInitialVolume() - unFilledVolume;
 	    if(filledVolume == 0)
@@ -138,7 +138,7 @@ public final class LinkedOrderBook implements OrderBook {
     private long getMaxFill(final Direction type) {	
 	long max = 0;
 	for(final MarketOrder mo : lastOrders) {
-	    if(!type.equals(mo.getOrder().getType()))
+	    if(!type.equals(mo.getDirection()))
 		continue;
 	    final long volume = mo.getFilledVolume();
 	    if(volume > max) {
@@ -179,7 +179,7 @@ public final class LinkedOrderBook implements OrderBook {
 	if(lastOrders.size() == 100) {
 	    final MarketOrder first = lastOrders.removeFirst();
 	    final long firstFilledVolume = first.getFilledVolume();
-	    if(first.getOrder().getType().equals(Direction.BUY)) {
+	    if(first.getDirection().equals(Direction.BUY)) {
 		state.moLast100BuyVol -= firstFilledVolume;
 		if(firstFilledVolume == state.moLast100BuyMax) {
 		    state.moLast100BuyMax = getMaxFill(Direction.BUY);
@@ -192,7 +192,7 @@ public final class LinkedOrderBook implements OrderBook {
 		}
 	    }
 	}
-	if(mo.getOrder().getType().equals(Direction.BUY)) {
+	if(mo.getOrder().equals(Direction.BUY)) {
 	    state.moLast100BuyVol += filledVolume;
 	    if(filledVolume > state.moLast100BuyMax) {
 		state.moLast100BuyMax = filledVolume;
@@ -237,8 +237,8 @@ public final class LinkedOrderBook implements OrderBook {
 	
 	if(t_and_s.size() == 100) {
 	    final Trade first = t_and_s.removeFirst();
-	    final long firstVol = first.getAmount();
-	    if(first.getDriection().equals(Direction.BUY)) {
+	    final long firstVol = first.getVolume();
+	    if(first.getDirection().equals(Direction.BUY)) {
 		if(firstVol == state.moLast100BuyTradeMax) {
 		    state.moLast100BuyTradeMax = getMaxTrade(Direction.BUY);
 		}
@@ -252,7 +252,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    }
 	}
 
-	if(s.getType().equals(Direction.BUY)) {
+	if(s.getDirection().equals(Direction.BUY)) {
 	    if(volumeRemoved > state.moLast100BuyTradeMax) {
 		state.moLast100BuyTradeMax = volumeRemoved;
 	    }
@@ -288,7 +288,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    final OrderInfo o = lo.getOrder();
 	    if(Integer.parseInt(o.getexchangeOrderId()) < hitOrderId) { 
 		final String id = o.getexchangeOrderId();
-		orphanedVolume += orders.remOrder(id, System.currentTimeMillis());
+		orphanedVolume += orders.remOrder(id);
 		orders.getDeadPool().add(id);
 	    }
 	    lo = next;
@@ -299,7 +299,7 @@ public final class LinkedOrderBook implements OrderBook {
     private void prune(final Trade s, Orders orders) {
 	final Limit best = orders.getBest();
 	if(best!=null) {
-	    final int hitOrderId = s.getMakerId();
+	    final int hitOrderId = Integer.parseInt(s.getMakerIdentifier());
 	    final int existingOrders = best.getOrders();
 	    if(s.getDirection().equals(Direction.BUY)) {
 		if(s.getPrice() > best.getPrice()) {
@@ -436,6 +436,8 @@ public final class LinkedOrderBook implements OrderBook {
         final Direction type = oe.getDirection();
 	final int priceIdx = o.getLimitPrice(); 
 	final long volSatoshi = o.getVolume();
+
+	final String id = o.getexchangeOrderId();
 	
 	if(type.equals(Direction.BUY)) {
 
@@ -446,7 +448,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    if(best != null && best.getPrice() <= priceIdx) {
 		// book crossed: put in bid market order map.
 		if(!buyMarketOrders.containsKey(id)) {
-		    buyMarketOrders.put(id, new MarketOrder(o));
+		    buyMarketOrders.put(id, new MarketOrder(o, Direction.BUY));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveBuys++;
@@ -478,7 +480,7 @@ public final class LinkedOrderBook implements OrderBook {
 
 		// book crossed: put in ask market order map.
 		if(!sellMarketOrders.containsKey(id)) {
-		    sellMarketOrders.put(id, new MarketOrder(o));
+		    sellMarketOrders.put(id, new MarketOrder(o, Direction.SELL));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveSells++;
@@ -508,19 +510,21 @@ public final class LinkedOrderBook implements OrderBook {
 	final int priceIdx = o.getLimitPrice();
         final long volSatoshi = o.getVolume();
 
+        final String id = o.getexchangeOrderId();
+
 	if(type.equals(Direction.BUY)) {
 	    
 	    if(bids.getDeadPool().contains(id))
 		return;
 
 	    final LimitOrder existingOrder = bids.getOrder(id);
-	    if(existingOrder!=null && existingOrder.getOrder().getPrice() != priceIdx) {
+	    if(existingOrder!=null && existingOrder.getOrder().getLimitPrice() != priceIdx) {
 
 		// this can happen if order is a (bitstamp specific) "instant order"
 		instantOrders.add(id);
 		
 		// remove from order book
-		final long volumeRemoved = bids.remOrder(id, localTimestamp);
+		final long volumeRemoved = bids.remOrder(id);
 
 		// update state
 		state.totalBids--;
@@ -529,8 +533,8 @@ public final class LinkedOrderBook implements OrderBook {
 		state.sellImpact = bids.getMarketImpact(State.impactPoints);
 
 		// add back as a new order.
-		addOrder(src, id, orderId, type, exchangeTimestamp, localTimestamp, volume, price);
-		
+		addOrder(oe);	
+	
 		return;
 	    }
 
@@ -554,7 +558,7 @@ public final class LinkedOrderBook implements OrderBook {
 		// (should have seen new order first) -add it to market orders map.
 		final Limit best = asks.getBest();
 		if(best != null && best.getPrice() <= priceIdx) {
-		    buyMarketOrders.put(id, new MarketOrder(o));
+		    buyMarketOrders.put(id, new MarketOrder(o, Direction.BUY));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveBuys++;
@@ -577,8 +581,8 @@ public final class LinkedOrderBook implements OrderBook {
 			// a modified buy order, if in the order book, is a partial fill from some
 			// sell market order: liquidity is being removed. log a sale in t&s (will
 			// be the tip of the knife so to speak).
-			final int takerId = getFirstKey(sellMarketOrders);
-			final int makerId = Integer.parseInt(o.getexchangeOrderId());
+			final String takerId = getFirstKey(sellMarketOrders);
+			final String makerId = o.getexchangeOrderId();
 			final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId); 
 			addSale(s);
 		    }
@@ -589,13 +593,13 @@ public final class LinkedOrderBook implements OrderBook {
 		return;
 
 	    final LimitOrder existingOrder = asks.getOrder(id);
-	    if(existingOrder!=null && existingOrder.getOrder().getPrice() != priceIdx) {
+	    if(existingOrder!=null && existingOrder.getOrder().getLimitPrice() != priceIdx) {
 		// this can happen if order is a (bitstamp specific) "instant order"
 		
 		instantOrders.add(id);
 
 		// remove from order book
-		final long volumeRemoved = asks.remOrder(id, localTimestamp);
+		final long volumeRemoved = asks.remOrder(id);
 
 		// update state
 		state.totalAsks--;
@@ -604,7 +608,7 @@ public final class LinkedOrderBook implements OrderBook {
 		state.buyImpact = asks.getMarketImpact(State.impactPoints);
 
 		// add back as a new order.
-		addOrder(src, id, orderId, type, exchangeTimestamp, localTimestamp, volume, price);
+		addOrder(oe);
 		
 		return;
 	    }
@@ -626,7 +630,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    } else {
 		final Limit best = bids.getBest();
 		if(best != null && best.getPrice() >= priceIdx) {
-		    sellMarketOrders.put(id, new MarketOrder(o));
+		    sellMarketOrders.put(id, new MarketOrder(o, Direction.SELL));
 		    state.event++;
 		    state.ts = System.currentTimeMillis();
 		    state.moActiveSells++;
@@ -644,8 +648,8 @@ public final class LinkedOrderBook implements OrderBook {
 			state.askPercentile = getPercentileVwap(state.bestAsk, Percentile.PERCENTILE_STEP_SIZE, Percentile.PERCENTILE_STEPS);
 			state.buyImpact = asks.getMarketImpact(State.impactPoints);
 		    } else if(volRemoved > 0) {
-			final int takerId = getFirstKey(buyMarketOrders);
-			final int makerId = Integer.parseInt(o.getexchangeOrderId());
+			final String takerId = getFirstKey(buyMarketOrders);
+			final String makerId = o.getexchangeOrderId();
 		        final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    }
@@ -660,6 +664,7 @@ public final class LinkedOrderBook implements OrderBook {
         if(o.getExchangeTimestamp() < firstNewOrderTs)
             return;
 
+        final String id = o.getexchangeOrderId();
         final Direction type = oe.getDirection();
         final int priceIdx = o.getLimitPrice();
         final long volSatoshi = o.getVolume();
@@ -672,19 +677,19 @@ public final class LinkedOrderBook implements OrderBook {
 	    bids.getDeadPool().add(id);
 	    if(buyMarketOrders.containsKey(id)) {
 		final MarketOrder mo = buyMarketOrders.remove(id);
-		final OrderInfo o = mo.getOrder();
-		final long unFilledVolume = (completeFill ? 0 : o.getVolume());
+		final OrderInfo moOrderInfo = mo.getOrder();
+		final long unFilledVolume = (completeFill ? 0 : moOrderInfo.getVolume());
 		final long filledVolume = mo.getInitialVolume() - unFilledVolume;
 		mo.setFilledVolume(filledVolume);
 		state.moActiveBuys--;
-		state.moOutstandingBuyVolume -= (completeFill ? o.getVolume() : unFilledVolume);
+		state.moOutstandingBuyVolume -= (completeFill ? moOrderInfo.getVolume() : unFilledVolume);
 		addFilledMo(mo);
 	    } else { 
-		final long volRemoved = bids.remOrder(id, localTimestamp);
+		final long volRemoved = bids.remOrder(id);
 		if(volRemoved > 0) { // -1 = unknown id.
 		    if(completeFill) {
-			final int takerId = getFirstKey(sellMarketOrders);
-			final int makerId = orderId;
+			final String takerId = getFirstKey(sellMarketOrders);
+			final String makerId = id;
 		        final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    } else {
@@ -698,19 +703,19 @@ public final class LinkedOrderBook implements OrderBook {
 	    asks.getDeadPool().add(id);
 	    if(sellMarketOrders.containsKey(id)) {
 		final MarketOrder mo = sellMarketOrders.remove(id);
-		final OrderInfo o = mo.getOrder();
-		final long unFilledVolume = (completeFill ? 0 : o.getVolume());
+		final OrderInfo moOrderInfo = mo.getOrder();
+		final long unFilledVolume = (completeFill ? 0 : moOrderInfo.getVolume());
 		final long filledVolume = mo.getInitialVolume() - unFilledVolume;
 		mo.setFilledVolume(filledVolume);
 		state.moActiveSells--;
-		state.moOutstandingSellVolume -= (completeFill ? o.getVolume() : unFilledVolume);
+		state.moOutstandingSellVolume -= (completeFill ? moOrderInfo.getVolume() : unFilledVolume);
 		addFilledMo(mo);
 	    } else {
-		final long volRemoved = asks.remOrder(id, localTimestamp);
+		final long volRemoved = asks.remOrder(id);
 		if(volRemoved > 0) {
 		    if(completeFill){
-			final int takerId = getFirstKey(buyMarketOrders);
-			final int makerId = orderId;
+			final String takerId = getFirstKey(buyMarketOrders);
+			final String makerId = id;
 			final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
 			addSale(s);
 		    } else {

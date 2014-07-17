@@ -32,9 +32,6 @@ public final class OrderBookStream implements EventListener<OrderEvent> {
       case DELETED:
         ob.delOrder(oe);
         return;
-      defualt:
-        assert false;
-        return;
     }
   }
 

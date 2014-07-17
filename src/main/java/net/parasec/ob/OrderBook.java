@@ -11,7 +11,7 @@ public interface OrderBook {
 
   void addOrder(OrderEvent oe);
   void modOrder(OrderEvent oe);
-  void delOrder(OrderEVent oe);
+  void delOrder(OrderEvent oe);
 
 }
 

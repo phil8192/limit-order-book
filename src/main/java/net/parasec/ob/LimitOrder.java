@@ -1,5 +1,8 @@
 package net.parasec.ob;
 
+import net.parasec.trading.ticker.core.wire.OrderInfo;
+
+
 // limit order
 public final class LimitOrder {
     

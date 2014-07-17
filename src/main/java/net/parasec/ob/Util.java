@@ -23,7 +23,7 @@ public final class Util {
   }
 
   public static StringBuilder tradeToCsv(final Trade trade, final String dl) {
-    return (new StringBuilder().append(ts).append(dl)
+    return (new StringBuilder().append(trade.getExchangeTimestamp()).append(dl)
         .append(asUSD(trade.getPrice())).append(dl)
         .append(asBTC(trade.getVolume())).append(dl)
         .append(trade.getDirection().equals(Direction.BUY) ? 1 : -1).append(dl)
