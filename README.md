@@ -24,8 +24,10 @@ away to a higher level protocol, FIX protocol?.
 Project uses maven. issue the following to build a stand-alone jar:
 
 ```bash
-mvn clean compile assembly:single
-
+git checkout https://github.com/phil8192/ticker
+cd ticker; mvn clean install; cd ..
+git checkout https://github.com/phil8192/limit-order-book
+cd limit-order-book; mvn clean compile assembly:single
 ```
 ## Running
 This has only ever been run on a 1920x1200 display; will fix this later. For now, change the font size so it fits. Ensure java is installed,
