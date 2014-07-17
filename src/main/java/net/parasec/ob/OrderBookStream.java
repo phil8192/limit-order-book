@@ -6,6 +6,10 @@ import net.parasec.trading.ticker.core.wire.OrderEvent;
 import net.parasec.trading.ticker.core.Ticker;
 import net.parasec.trading.ticker.bitstamp.BitstampTicker;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+import org.apache.log4j.Level;
+
 
 public final class OrderBookStream implements EventListener<OrderEvent> { 
 
@@ -25,17 +29,21 @@ public final class OrderBookStream implements EventListener<OrderEvent> {
     switch(oe.getState()) {
       case CREATED: 
         ob.addOrder(oe); 
-        return;
+        break;
       case UPDATED:
         ob.modOrder(oe);
-        return;
+        break;
       case DELETED:
         ob.delOrder(oe);
-        return;
+        break;
     }
+    evt.onUpdate(ob);
   }
 
   public static void main(final String[] args) throws Exception {
+    BasicConfigurator.configure();
+    Logger.getRootLogger().setLevel(Level.ERROR);
+
     final Ticker t = new BitstampTicker();
     t.watchOrders(new EventQueue(new OrderBookStream(new OrderBookStream.Evt() {
       public void onUpdate(final OrderBook ob) {
