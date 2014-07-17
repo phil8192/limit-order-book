@@ -192,7 +192,7 @@ public final class LinkedOrderBook implements OrderBook {
 		}
 	    }
 	}
-	if(mo.getOrder().equals(Direction.BUY)) {
+	if(mo.getDirection().equals(Direction.BUY)) {
 	    state.moLast100BuyVol += filledVolume;
 	    if(filledVolume > state.moLast100BuyMax) {
 		state.moLast100BuyMax = filledVolume;
