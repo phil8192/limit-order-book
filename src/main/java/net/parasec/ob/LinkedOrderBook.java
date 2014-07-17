@@ -801,7 +801,7 @@ public final class LinkedOrderBook implements OrderBook {
 		.append(formatAskLevel(askPer, askVolSum, ask));
 	    if(t_and_s_it.hasNext()) {
 		final Trade sale = t_and_s_it.next();
-		sb.append(" ").append(sale);
+		sb.append(" ").append(Util.tradeToString(sale));
 	    }
 	    sb.append("\n");
 	}
