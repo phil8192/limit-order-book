@@ -279,14 +279,14 @@ public final class LinkedOrderBook implements OrderBook {
     }
     
 
-    private long removeOrphanedOrders(final Limit best, final Orders orders, final int hitOrderId) {
+    private long removeOrphanedOrders(final Limit best, final Orders orders, final long hitTimestamp) {
 	// remove any orders from the best bid/ask that arrived before the last sale.
 	long orphanedVolume = 0;
 	LimitOrder lo = best.getHead();
 	while(lo!=null) {
 	    final LimitOrder next = lo.getRightSibling();
 	    final OrderInfo o = lo.getOrder();
-	    if(Integer.parseInt(o.getexchangeOrderId()) < hitOrderId) { 
+	    if(o.getExchangeTimestamp() < hitTimestamp) { 
 		final String id = o.getexchangeOrderId();
 		orphanedVolume += orders.remOrder(id);
 		orders.getDeadPool().add(id);
@@ -299,18 +299,18 @@ public final class LinkedOrderBook implements OrderBook {
     private void prune(final Trade s, Orders orders) {
 	final Limit best = orders.getBest();
 	if(best!=null) {
-	    final int hitOrderId = Integer.parseInt(s.getMakerIdentifier());
+            final long hitTimestamp = s.getMakerTimestamp();
 	    final int existingOrders = best.getOrders();
 	    if(s.getDirection().equals(Direction.BUY)) {
 		if(s.getPrice() > best.getPrice()) {
 		    // ask side.
-		    state.totalAskVol -= removeOrphanedOrders(best, orders, hitOrderId);
+		    state.totalAskVol -= removeOrphanedOrders(best, orders, hitTimestamp);
 		    state.totalAsks -= existingOrders - best.getOrders();
 		}
 	    } else {
 		if(s.getPrice() < best.getPrice()) {
 		    // bid side.
-		    state.totalBidVol -= removeOrphanedOrders(best, orders, hitOrderId);
+		    state.totalBidVol -= removeOrphanedOrders(best, orders, hitTimestamp);
 		    state.totalBids -= existingOrders - best.getOrders();
 		}
 	    }
@@ -583,7 +583,7 @@ public final class LinkedOrderBook implements OrderBook {
 			// be the tip of the knife so to speak).
 			final String takerId = getFirstKey(sellMarketOrders);
 			final String makerId = o.getexchangeOrderId();
-			final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId); 
+			final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), o.getExchangeTimestamp(), null, makerId, takerId); 
 			addSale(s);
 		    }
 		}
@@ -650,7 +650,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    } else if(volRemoved > 0) {
 			final String takerId = getFirstKey(buyMarketOrders);
 			final String makerId = o.getexchangeOrderId();
-		        final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
+		        final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), o.getExchangeTimestamp(), null, makerId, takerId);
 			addSale(s);
 		    }
 		}
@@ -690,7 +690,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    if(completeFill) {
 			final String takerId = getFirstKey(sellMarketOrders);
 			final String makerId = id;
-		        final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
+		        final Trade s = new Trade(Direction.SELL, priceIdx, volRemoved, System.currentTimeMillis(), o.getExchangeTimestamp(), null, makerId, takerId);
 			addSale(s);
 		    } else {
 			// trader removed after a partial fill or cancelled before any fill
@@ -716,7 +716,7 @@ public final class LinkedOrderBook implements OrderBook {
 		    if(completeFill){
 			final String takerId = getFirstKey(buyMarketOrders);
 			final String makerId = id;
-			final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), null, makerId, takerId);
+			final Trade s = new Trade(Direction.BUY, priceIdx, volRemoved, System.currentTimeMillis(), o.getExchangeTimestamp(), null, makerId, takerId);
 			addSale(s);
 		    } else {
 			addCancel(new Cancel(id, Direction.SELL, volRemoved));
