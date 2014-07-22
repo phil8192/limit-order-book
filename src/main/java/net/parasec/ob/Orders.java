@@ -136,7 +136,6 @@ public final class Orders {
 
     private void addNewOrder(final OrderInfo order) {
 	final int priceIdx = order.getLimitPrice();
-	final int orderId = Integer.parseInt(order.getexchangeOrderId());
 
 	Limit p = sparseLevels[priceIdx];
 	final LimitOrder o;
@@ -154,12 +153,13 @@ public final class Orders {
 
 	} else {
 
-	    // price limit exists. insert new order into this price level queue ordered by order id
+	    // price limit exists. insert new order into this price level queue ordered by timestamp 
 	    // (this is because there is no guarantee order book events will arrive in order).
 		
-	    // keep looking left until we find the left sibling (ls order_id < new order_id)
+	    // keep looking left until we find the left sibling (ls timestamp < new timestamp)
+            final long ts = order.getExchangeTimestamp();
 	    LimitOrder ls = p.getLast();
-	    while(ls != null && Integer.parseInt(ls.getOrder().getexchangeOrderId()) > orderId) {
+	    while(ls != null && ls.getOrder().getExchangeTimestamp() > ts) {
 		ls = ls.getLeftSibling();
 	    }
 		
