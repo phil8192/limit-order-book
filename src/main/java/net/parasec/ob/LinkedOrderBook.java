@@ -28,8 +28,6 @@ public final class LinkedOrderBook implements OrderBook {
     private final ArrayDeque<Cancel> lastCancels = new ArrayDeque<Cancel>(100);
    
 
-    //private int pivot = 0;
-
     // market orders (emulated: an order is a market order if it crosses the book)
     // insertion order.
     // Bouchard, in Statistical properties of stock order books, defines this type of order as technically being 
@@ -37,18 +35,39 @@ public final class LinkedOrderBook implements OrderBook {
     private final LinkedHashMap<String,MarketOrder> buyMarketOrders = new LinkedHashMap<String,MarketOrder>();
     private final LinkedHashMap<String,MarketOrder> sellMarketOrders = new LinkedHashMap<String,MarketOrder>();
 
+    // in the event that an mo has not been cleared after 1 minute.
+    // this can happen if data is omitted from the feed. 
+    private void purgeStaleBuyMos(long exchangeTs) {
+      boolean purged=false;
+      for(Iterator<Map.Entry<String,MarketOrder>> it
+          = buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+        OrderInfo oi=it.next().getValue().getOrder();
+        if(exchangeTs-oi.getExchangeTimestamp() > 60000) {
+          state.moActiveBuys--;
+          state.moOutstandingBuyVolume-=oi.getVolume();  
+          it.remove();  
+          purged=true;
+        }
+      }
+      if(purged)
+        state.moBuyTip = asks.getMarketImpact(buyMarketOrders);
+    }
 
-    // instant orders: bitstamp have a crappy "instant order" mechanism (ui only) - orders placed in this way
-    // will eat the best bid (ask) on other side of the book once per second until the order has been consumed.
-    // previously they modified the order once every 5 minutes, placing it at the best bid (ask) on it's own
-    // side of the book. both mechanisms are crappy because makers have ample opportunity to remove liquidity
-    // while the order is eating up the book: taker will get bad price, market will be more volatile. track
-    // instant order ids here as to avoid synchronisation bug: instant order consumes level, then placed in book,
-    // volume update received for consumed limit, sale incorrectly logged as consuming from instant order.
-    // also do not want to count instant order as another mo (since it will cross the book).
-    // instant orders can only be identified by an order update: the limit price will change.
-    private final HashSet<String> instantOrders = new HashSet<String>();
-
+    private void purgeStaleSellMos(long exchangeTs) {
+      boolean purged=false;
+      for(Iterator<Map.Entry<String,MarketOrder>> it
+          = sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+        OrderInfo oi=it.next().getValue().getOrder();
+        if(exchangeTs-oi.getExchangeTimestamp() > 60000) {
+          state.moActiveSells--;
+          state.moOutstandingSellVolume-=oi.getVolume();
+          it.remove();
+          purged=true;
+        }
+      }
+      if(purged)
+        state.moSellTip = bids.getMarketImpact(sellMarketOrders);
+    }
 
     private String getFirstKey(final LinkedHashMap<String,MarketOrder> marketOrders) {
 	if(marketOrders.isEmpty())
@@ -428,10 +447,16 @@ public final class LinkedOrderBook implements OrderBook {
     }
 
   public void addOrder(final OrderEvent oe) {
-       final OrderInfo o = oe.getOrderInfo();    
+        final OrderInfo o = oe.getOrderInfo();    
 
-       if(firstNewOrderTs == 4102444800L)
-           firstNewOrderTs = o.getExchangeTimestamp();
+        long exchangeTs = o.getExchangeTimestamp();
+        if(firstNewOrderTs == 4102444800L)
+            firstNewOrderTs = exchangeTs; 
+
+        // new orders contain latest exchange ts.
+        // remove any stale market orders.
+        purgeStaleBuyMos(exchangeTs);
+        purgeStaleSellMos(exchangeTs);
 
         final Direction type = oe.getDirection();
 	final int priceIdx = o.getLimitPrice(); 
@@ -520,9 +545,6 @@ public final class LinkedOrderBook implements OrderBook {
 	    final LimitOrder existingOrder = bids.getOrder(id);
 	    if(existingOrder!=null && existingOrder.getOrder().getLimitPrice() != priceIdx) {
 
-		// this can happen if order is a (bitstamp specific) "instant order"
-		instantOrders.add(id);
-		
 		// remove from order book
 		final long volumeRemoved = bids.remOrder(id);
 
@@ -594,10 +616,6 @@ public final class LinkedOrderBook implements OrderBook {
 
 	    final LimitOrder existingOrder = asks.getOrder(id);
 	    if(existingOrder!=null && existingOrder.getOrder().getLimitPrice() != priceIdx) {
-		// this can happen if order is a (bitstamp specific) "instant order"
-		
-		instantOrders.add(id);
-
 		// remove from order book
 		final long volumeRemoved = asks.remOrder(id);
 
