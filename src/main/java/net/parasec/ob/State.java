@@ -44,6 +44,21 @@ public final class State {
     //////////// liquidity providers/makers
     public Limit bestBid=null;
     public Limit bestAsk=null;
+
+
+   public Limit getBestBid() {
+     return bestBid;
+   }
+
+   public Limit getBestAsk() {
+     return bestAsk;
+   }
+
+   public int getMidPrice() { 
+     return (int) Math.round((bestBid.getPrice()+bestAsk.getPrice())/2.0);
+   }
+   
+
     //public int bestBid=0;
     //public int bestAsk=0;
     //public long bestBidVol=0;
