@@ -2,10 +2,16 @@ Limit Order Book
 ================
 
 ### Warning
-very rough code, thrown together very quickly in order to study limit order book dynamics/market microstructure. 
-It is so rough in fact, that I will probably re-code it.
+Very rough code, thrown together very quickly in order to study limit order book dynamics/market microstructure. 
+It is so rough in fact, that I will probably re-code it. Much of the mess is the result of various issues encountered
+along the way, most notably:
 
-![limit order book](https://raw.githubusercontent.com/phil8192/limit-order-book/master/ob.png)
+- Missing data: bitstamp's event stream frequently omits data which results in complicated order life-cycle management.
+- Unordered data: data frequently appears out of order. For example, a cancel event followed by an add event.
+
+Besides the code, the tool does however work and is quite usable.
+
+![limit order book](http://parasec.net/transmission/limit-order-book/limit-order-book.gif)
 
 ### Overview
 This is an implementation of a [Limit Order Book](http://en.wikipedia.org/wiki/Order_book_(trading)). It has 2 modes of operation: 1) It
@@ -37,9 +43,7 @@ then to consume from bitstamp's live orders stream:
 java -jar target/ob-jar-with-dependencies.jar 2>ob.log
 ```
 
-(Note that I also have a pre-packaged .jar available [here](http://parasec.net/order-book/ob-jar-with-dependencies.jar)) This will start
-populating the bid/ask side of the book in real-time. In addition, a log-file is created (ob.log) via stderr!. To later parse this log
-file into a csv, use the parse_ob.sh script:
+In addition, a log-file is created (ob.log) via stderr!. To later parse this log file into a csv, use the parse_ob.sh script:
 
 ```bash
 ./parse_ob.sh ob.log ob.csv
@@ -207,6 +211,7 @@ This is simply a count of the number of buy/sell market orders since order book 
 ## Issues
 - The current trade information active buy/sells (#|vol|impact) sometimes remains static (it should only be populated while trades are being
 executed. This is due to the fact that the bitstmap feed sometimes omits order events.
+
 - Sometimes the time and sales data may contain duplicates. This sometimes occurs with Bitstamp's market order emulation initiated from their
 trading UI (instant order). This is because an order placed in this way will be re-positioned (cancel,add) every second at the current best bid/ask
 until the order has been filled. It is difficult to determine the trade direction in this case. (All orders appear as limit orders)
