@@ -431,5 +431,6 @@ public final class Orders {
 	return (i == priceIdx ? priceIdx : i - 1);
     }
 
+    public Limit[] getLevels() { return sparseLevels; }   
 
 }

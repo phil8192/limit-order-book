@@ -20,8 +20,8 @@ public final class LinkedOrderBook implements OrderBook {
     private final ArrayDeque<MarketOrder> lastOrders = new ArrayDeque<MarketOrder>(100);
     
 
-    //private final int depth = 45;
-    private final int depth = 114;
+    private final int depth = 45;
+    //private final int depth = 114;
     // last 100 t&s (trades) derived from order book.
     private final ArrayDeque<Trade> t_and_s = new ArrayDeque<Trade>(100);
 
