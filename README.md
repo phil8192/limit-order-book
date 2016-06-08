@@ -1,6 +1,10 @@
 Limit Order Book
 ================
 
+### Note: June 2016
+Unfortunately, since Tue Jun 7 15:50:53.046 UTC 2016, Bitstamp are no longer
+streaming limit order updates...
+
 ### Warning
 Very rough code, thrown together very quickly in order to study limit order book dynamics/market microstructure. 
 It is so rough in fact, that I will probably re-code it. Much of the mess is the result of various issues encountered
