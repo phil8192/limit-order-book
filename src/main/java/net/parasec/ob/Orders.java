@@ -24,8 +24,8 @@ public final class Orders {
     }
 
     // limit orders are stored in sparse array for fast access. index is USD*100,
-    // max value = 9999.99 USD.
-    private final Limit[] sparseLevels = new Limit[1000000];
+    // max value = 99999.99 USD.
+    private final Limit[] sparseLevels = new Limit[10000000];
 
     // the current best bid or ask.
     private Limit best = null;

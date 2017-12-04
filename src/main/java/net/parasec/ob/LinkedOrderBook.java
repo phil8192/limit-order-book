@@ -493,8 +493,8 @@ public final class LinkedOrderBook implements OrderBook {
 		state.sellImpact = bids.getMarketImpact(State.impactPoints);
 	    }
 	}else{
-	    if(priceIdx >= 1000000) {
-		// ignore orders to sell >= 10k.
+	    if(priceIdx >= 10000000) {
+		// ignore orders to sell >= 100k.
 		return;
 	    }
 
