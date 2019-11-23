@@ -25,6 +25,10 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 		this.symbol = symbol;
 	}
 
+	public OrderBook getOb() {
+		return ob;
+	}
+
 	private int getLimitPrice(double price, String symbol) {
 		return Util.asCents(price);
 	}
@@ -59,9 +63,6 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 				state = net.parasec.trading.ticker.core.wire.OrderEvent.State.DELETED;
 				ob.delOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(state, direction, symbol, venue, localTs, orderInfo));
 		}
-
-		System.out.print("\u001b[2J\u001b[H");
-		System.out.println(ob);
 		System.err.println(ob.getState().toCsv());
 	}
 
@@ -73,8 +74,11 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 		Client client = new BitstampClient();
 		String subscriptionId = client.subscribeOrders(symbol, orderBookStream);
 		try {
+			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
+				System.out.print("\u001b[2J\u001b[H");
+				System.out.println(ob);
 			}
 		} catch (InterruptedException e) {
 		}
