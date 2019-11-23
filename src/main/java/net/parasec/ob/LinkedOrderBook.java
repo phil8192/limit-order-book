@@ -765,7 +765,7 @@ public final class LinkedOrderBook implements OrderBook {
 
     private String formatAskLevel(final double per, final long volSum, final Limit askLevel) {
 	if(askLevel!=null){
-	    return ansi().fg(RED).a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
+	    return ansi().bold().fgBrightRed().a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
 		Util.asBTC(askLevel.getVolume()) + "\t" +
 		askLevel.getOrders() + "\t" +
 		Util.asBTC(volSum) + "\t" +
@@ -780,9 +780,9 @@ public final class LinkedOrderBook implements OrderBook {
 		Util.asBTC(volSum) + "\t" + 
 		bidLevel.getOrders() + "\t" +
 		Util.asBTC(bidLevel.getVolume()) + "\t" +
-		ansi().fg(GREEN).a(Util.asUSD(bidLevel.getPrice())).reset();
+		ansi().bold().fgBrightBlue().a(Util.asUSD(bidLevel.getPrice())).reset();
 	}
-	return "                                                      ";
+	return "                                                       ";
     }
 
     public String toString() {
@@ -817,16 +817,16 @@ public final class LinkedOrderBook implements OrderBook {
 		askPer = 0;
 	    }
 	    sb.append(formatBidLevel(bidPer, bidVolSum, bid))
-		.append(" | ")
+		.append(ansi().fg(WHITE).a(" | ").reset())
 		.append(formatAskLevel(askPer, askVolSum, ask));
 	    if(t_and_s_it.hasNext()) {
 		final Trade sale = t_and_s_it.next();
 		//sb.append(" ").append(Util.tradeToString(sale));
-                sb.append(" ").append( ansi().fg(sale.getDirection().equals(Direction.BUY) ? GREEN : RED).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
+                sb.append(" ").append( ansi().bg(sale.getDirection().equals(Direction.BUY) ? BLUE : RED).fgBright(WHITE).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
 	    }
 	    sb.append("\n");
 	}
-	return sb.append("=============================================================================================================\n")
+	return sb.append(ansi().fg(WHITE).a("===================================================================================================================================================").reset() + "\n")
 	    .append(state).toString();
     }
 
