@@ -36,9 +36,11 @@ away to a higher level protocol, FIX protocol?.
 Project uses maven. issue the following to build a stand-alone jar:
 
 ```bash
-git checkout https://github.com/phil8192/ticker
+git clone https://github.com/phil8192/ticker
 cd ticker; mvn clean install; cd ..
-git checkout https://github.com/phil8192/limit-order-book
+git clone https://github.com/phil8192/bitstamp-ws
+cd bitstamp-ws; mvn clean install; cd ..
+git clone https://github.com/phil8192/limit-order-book
 cd limit-order-book; mvn clean compile assembly:single
 ```
 ## Running
@@ -46,12 +48,13 @@ This has only ever been run on a 1920x1200 display; will fix this later. For now
 then to consume from bitstamp's live orders stream:
 
 ```
-java -jar target/ob-jar-with-dependencies.jar 2>ob.log
+./ob.sh btcusd 2>/dev/null
 ```
 
 In addition, a log-file is created (ob.log) via stderr!. To later parse this log file into a csv, use the parse_ob.sh script:
 
 ```bash
+./ob.sh btcusd 2>ob.csv
 ./parse_ob.sh ob.log ob.csv
 ``` 
 
