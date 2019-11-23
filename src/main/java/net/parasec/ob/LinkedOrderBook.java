@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.ArrayDeque;
-import java.util.HashSet;
-
 
 public final class LinkedOrderBook implements OrderBook {
 

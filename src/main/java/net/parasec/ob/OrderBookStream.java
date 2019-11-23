@@ -64,8 +64,6 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 				state = net.parasec.trading.ticker.core.wire.OrderEvent.State.DELETED;
 				ob.delOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(state, direction, symbol, venue, localTs, orderInfo));
 		}
-		ansi().eraseScreen();
-		System.out.println(ob);
 		System.err.println(ob.getState().toCsv());
 	}
 
@@ -82,6 +80,8 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
+				ansi().eraseScreen(Erase.ALL);
+				System.out.println(ansi().eraseScreen().a(ob).reset());
 			}
 		} catch (InterruptedException e) {
 		}
