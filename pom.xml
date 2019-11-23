@@ -78,6 +78,11 @@
        <artifactId>slf4j-log4j12</artifactId>
        <version>1.7.5</version>
    </dependency>
-  </dependencies>
+		<dependency>
+			<groupId>org.fusesource.jansi</groupId>
+			<artifactId>jansi</artifactId>
+			<version>1.18</version>
+		</dependency>
+	</dependencies>
 
 </project>

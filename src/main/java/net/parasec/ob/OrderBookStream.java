@@ -10,7 +10,8 @@ import net.parasec.trading.ticker.core.wire.OrderInfo;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
-
+import org.fusesource.jansi.AnsiConsole;
+import static org.fusesource.jansi.Ansi.*;
 
 public final class OrderBookStream implements BitstampMessageHandler<OrderEvent> {
 
@@ -63,12 +64,16 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 				state = net.parasec.trading.ticker.core.wire.OrderEvent.State.DELETED;
 				ob.delOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(state, direction, symbol, venue, localTs, orderInfo));
 		}
+		ansi().eraseScreen();
+		System.out.println(ob);
 		System.err.println(ob.getState().toCsv());
 	}
 
 	public static void main(final String[] args) throws Exception {
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.ERROR);
+		AnsiConsole.systemInstall();
+
 		String symbol = args[0];
 		OrderBookStream orderBookStream = new OrderBookStream("bitstamp", symbol);
 		Client client = new BitstampClient();
@@ -77,8 +82,6 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
-				System.out.print("\u001b[2J\u001b[H");
-				System.out.println(ob);
 			}
 		} catch (InterruptedException e) {
 		}
