@@ -188,6 +188,8 @@ public final class Orders {
 	// increase number of orders and volume at this price level.
 	p.setOrders(p.getOrders() + 1).setVolume(p.getVolume() + order.getVolume());
 
+	p.setLastAdded(System.currentTimeMillis());
+
 	// add the new order (id) to the active order pool.
 	orderPool.put(order.getexchangeOrderId(), o);
     }

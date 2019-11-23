@@ -12,13 +12,23 @@ public final class Limit {
     private LimitOrder head;
     private LimitOrder last;
 
+    private long lastAdded;
+
     public Limit(final int price, final Limit leftSibling, final Limit rightSibling) {
 	this.price = price;
 	this.leftSibling = leftSibling;
 	this.rightSibling = rightSibling;
     }
 
-    public Limit setVolume(final long volume) {
+	public long getLastAdded() {
+		return lastAdded;
+	}
+
+	public void setLastAdded(long lastAdded) {
+		this.lastAdded = lastAdded;
+	}
+
+	public Limit setVolume(final long volume) {
 	this.volume = volume;
 	return this;
     }

@@ -4,6 +4,7 @@ import net.parasec.trading.ticker.core.wire.OrderEvent;
 import net.parasec.trading.ticker.core.wire.OrderInfo;
 import net.parasec.trading.ticker.core.wire.Direction;
 import net.parasec.trading.ticker.core.wire.Trade;
+import org.fusesource.jansi.Ansi;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -765,7 +766,19 @@ public final class LinkedOrderBook implements OrderBook {
 
     private String formatAskLevel(final double per, final long volSum, final Limit askLevel) {
 	if(askLevel!=null){
-	    return ansi().bold().fgBrightRed().a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
+		long tLim = askLevel.getLastAdded();
+		long tNow = System.currentTimeMillis();
+		long diff = tNow - tLim;
+		Ansi ansi;
+		if(diff < 3000)
+			ansi = ansi().bold().fgBrightRed();
+		else if(diff < 60000)
+			ansi = ansi().fgRed();
+		else if(diff < 300000)
+			ansi = ansi();
+		else
+			ansi = ansi().fgBrightBlack();
+		return ansi.a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
 		Util.asBTC(askLevel.getVolume()) + "\t" +
 		askLevel.getOrders() + "\t" +
 		Util.asBTC(volSum) + "\t" +
@@ -776,11 +789,23 @@ public final class LinkedOrderBook implements OrderBook {
 
     private String formatBidLevel(final double per, final long volSum, final Limit bidLevel) {
 	if(bidLevel!=null){
-	    return String.format("%.2f", per) + "%\t" + 
+		long tLim = bidLevel.getLastAdded();
+		long tNow = System.currentTimeMillis();
+		long diff = tNow - tLim;
+		Ansi ansi;
+		if(diff < 3000)
+			ansi = ansi().bold().fgBrightGreen();
+		else if(diff < 60000)
+			ansi = ansi().fgGreen();
+		else if(diff < 300000)
+			ansi = ansi();
+		else
+			ansi = ansi().fgBrightBlack();
+		return String.format("%.2f", per) + "%\t" +
 		Util.asBTC(volSum) + "\t" + 
 		bidLevel.getOrders() + "\t" +
 		Util.asBTC(bidLevel.getVolume()) + "\t" +
-		ansi().bold().fgBrightBlue().a(Util.asUSD(bidLevel.getPrice())).reset();
+				ansi.a(Util.asUSD(bidLevel.getPrice())).reset();
 	}
 	return "                                                       ";
     }
@@ -822,7 +847,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    if(t_and_s_it.hasNext()) {
 		final Trade sale = t_and_s_it.next();
 		//sb.append(" ").append(Util.tradeToString(sale));
-                sb.append(" ").append( ansi().bg(sale.getDirection().equals(Direction.BUY) ? BLUE : RED).fgBright(WHITE).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
+                sb.append(" ").append( ansi().bg(sale.getDirection().equals(Direction.BUY) ? GREEN : RED).fgBright(WHITE).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
 	    }
 	    sb.append("\n");
 	}
