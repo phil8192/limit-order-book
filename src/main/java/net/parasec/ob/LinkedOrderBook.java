@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.ArrayDeque;
 
+import static org.fusesource.jansi.Ansi.*;
+import static org.fusesource.jansi.Ansi.Color.*;
+
 public final class LinkedOrderBook implements OrderBook {
 
   private long firstNewOrderTs = 4102444800L; // Fri Jan  1 00:00:00 UTC 2100
@@ -762,7 +765,7 @@ public final class LinkedOrderBook implements OrderBook {
 
     private String formatAskLevel(final double per, final long volSum, final Limit askLevel) {
 	if(askLevel!=null){
-	    return Util.asUSD(askLevel.getPrice()) + "\t" +
+	    return ansi().fg(RED).a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
 		Util.asBTC(askLevel.getVolume()) + "\t" +
 		askLevel.getOrders() + "\t" +
 		Util.asBTC(volSum) + "\t" +
@@ -777,7 +780,7 @@ public final class LinkedOrderBook implements OrderBook {
 		Util.asBTC(volSum) + "\t" + 
 		bidLevel.getOrders() + "\t" +
 		Util.asBTC(bidLevel.getVolume()) + "\t" +
-		Util.asUSD(bidLevel.getPrice());
+		ansi().fg(GREEN).a(Util.asUSD(bidLevel.getPrice())).reset();
 	}
 	return "                                                      ";
     }
@@ -819,7 +822,7 @@ public final class LinkedOrderBook implements OrderBook {
 	    if(t_and_s_it.hasNext()) {
 		final Trade sale = t_and_s_it.next();
 		//sb.append(" ").append(Util.tradeToString(sale));
-                sb.append(" ").append(sale.getDirection().equals(Direction.BUY) ? "+" : "-").append(Util.asBTC(sale.getVolume())).append(" @ ").append(Util.asUSD(sale.getPrice()));
+                sb.append(" ").append( ansi().fg(sale.getDirection().equals(Direction.BUY) ? GREEN : RED).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
 	    }
 	    sb.append("\n");
 	}
