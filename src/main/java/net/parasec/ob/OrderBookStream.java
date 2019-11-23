@@ -80,8 +80,8 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
-				ansi().eraseScreen(Erase.ALL);
-				System.out.println(ansi().eraseScreen().a(ob).reset());
+				// todo: render string in thread/pre cache to reduce flicker
+				System.out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
 			}
 		} catch (InterruptedException e) {
 		}
