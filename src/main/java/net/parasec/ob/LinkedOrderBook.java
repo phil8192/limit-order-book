@@ -782,7 +782,7 @@ public final class LinkedOrderBook implements OrderBook {
 		Util.asBTC(askLevel.getVolume()) + "\t" +
 		askLevel.getOrders() + "\t" +
 		Util.asBTC(volSum) + "\t" +
-		String.format("%.2f", per) + "%";
+				(volSum <= state.moLast100BuyMax ? ansi().fgBrightGreen() : ansi().fgBrightDefault()).a(String.format("%.2f", per) + "%").reset();
 	}
 	return "";
     }
@@ -801,7 +801,7 @@ public final class LinkedOrderBook implements OrderBook {
 			ansi = ansi();
 		else
 			ansi = ansi().fgBrightBlack();
-		return String.format("%.2f", per) + "%\t" +
+		return (volSum <= state.moLast100SellMax ? ansi().fgBrightRed() : ansi().fgBrightDefault()).a(String.format("%.2f", per) + "%").reset() + "\t" +
 		Util.asBTC(volSum) + "\t" + 
 		bidLevel.getOrders() + "\t" +
 		Util.asBTC(bidLevel.getVolume()) + "\t" +
