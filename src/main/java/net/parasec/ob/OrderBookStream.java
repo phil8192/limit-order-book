@@ -11,6 +11,8 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiRenderer;
+
 import static org.fusesource.jansi.Ansi.*;
 
 public final class OrderBookStream implements BitstampMessageHandler<OrderEvent> {
@@ -64,7 +66,7 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 				state = net.parasec.trading.ticker.core.wire.OrderEvent.State.DELETED;
 				ob.delOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(state, direction, symbol, venue, localTs, orderInfo));
 		}
-		//System.out.println(ansi().a(ob).reset());
+		AnsiConsole.system_out.println(ansi().a(ob).reset());
 		//System.out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
 		System.err.println(ob.getState().toCsv());
 	}
@@ -82,8 +84,7 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
-				System.out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
-				//System.out.println(ansi().a(ob).reset());
+				//AnsiConsole.system_out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
 			}
 		} catch (InterruptedException e) {
 		}

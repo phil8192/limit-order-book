@@ -38,7 +38,8 @@ public final class State {
     public long moLast100SellTradeVol=0;
     public long moLast100SellTradeMax=0;
 
-    
+    public int tradeLast100Low;
+    public int tradeLast100High;
 
 
     //////////// liquidity providers/makers
@@ -182,7 +183,7 @@ public final class State {
 
 	    sb.append("takers (market orders): ").append("active buys (#|vol|impact) = ").append(moActiveBuys).append("|").append(Util.asBTC(moOutstandingBuyVolume)).append("|").append(Util.asUSD(moBuyTip)).append(" active sells (#|vol|impact) = ").append(moActiveSells).append("|").append(Util.asBTC(moOutstandingSellVolume)).append("|").append(Util.asUSD(moSellTip)).append(nl)
 		.append("takers, last 100 market orders: buys|sells = ").append(moLast100Buy).append("|").append(100-moLast100Buy).append(" filled|max buy vol = ").append(Util.asBTC(moLast100BuyVol)).append("|").append(Util.asBTC(moLast100BuyMax)).append(" filled|max sell vol = ").append(Util.asBTC(moLast100SellVol)).append("|").append(Util.asBTC(moLast100SellMax)).append(nl)
-		.append("takers, last 100 trades: ").append(" buys|sells = ").append(moLast100BuyTrades).append("|").append(100-moLast100BuyTrades).append(" total|max buy vol = ").append(Util.asBTC(moLast100BuyTradeVol)).append("|").append(Util.asBTC(moLast100BuyTradeMax)).append(" total|max sell vol = ").append(Util.asBTC(moLast100SellTradeVol)).append("|").append(Util.asBTC(moLast100SellTradeMax)).append(nl)
+		.append("takers, last 100 trades: low|high = ").append(Util.asUSD(tradeLast100Low)).append("|").append(Util.asUSD(tradeLast100High)).append(" buys|sells = ").append(moLast100BuyTrades).append("|").append(100-moLast100BuyTrades).append(" total|max buy vol = ").append(Util.asBTC(moLast100BuyTradeVol)).append("|").append(Util.asBTC(moLast100BuyTradeMax)).append(" total|max sell vol = ").append(Util.asBTC(moLast100SellTradeVol)).append("|").append(Util.asBTC(moLast100SellTradeMax)).append(nl)
 		.append("makers, best bid|ask = ");
 	
 	    sb.append((bestBid==null?"na":Util.asUSD(bestBid.getPrice())));

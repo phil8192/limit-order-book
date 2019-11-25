@@ -170,7 +170,33 @@ public final class LinkedOrderBook implements OrderBook {
 	return max;
     }
 
-    private long getMaxTrade(final Direction type) {
+	private int getMaxTradePrice(final Direction type) {
+		if (type.equals(Direction.BUY)) {
+			int best = 0;
+			for (final Trade s : t_and_s) {
+				if (!type.equals(s.getDirection()))
+					continue;
+				final int price = s.getPrice();
+				if (price > best) {
+					best = price;
+				}
+			}
+			return best;
+		} else {
+			int best = Integer.MAX_VALUE;
+			for (final Trade s : t_and_s) {
+				if (!type.equals(s.getDirection()))
+					continue;
+				final int price = s.getPrice();
+				if (price < best) {
+					best = price;
+				}
+			}
+			return best;
+		}
+	}
+
+	private long getMaxTrade(final Direction type) {
 	long max = 0;
 	for(final Trade s : t_and_s) {
 	    if(!type.equals(s.getDirection()))
@@ -256,28 +282,38 @@ public final class LinkedOrderBook implements OrderBook {
 	} else if(price < state.lowestPrice) {
 	    state.lowestPrice = price;
 	}
-	
-	if(t_and_s.size() == 100) {
-	    final Trade first = t_and_s.removeFirst();
-	    final long firstVol = first.getVolume();
-	    if(first.getDirection().equals(Direction.BUY)) {
-		if(firstVol == state.moLast100BuyTradeMax) {
-		    state.moLast100BuyTradeMax = getMaxTrade(Direction.BUY);
-		}
-		state.moLast100BuyTrades--;
-		state.moLast100BuyTradeVol -= firstVol;
-	    } else {
-		if(firstVol == state.moLast100SellTradeMax) {
-		    state.moLast100SellTradeMax = getMaxTrade(Direction.SELL);
-		}
-		state.moLast100SellTradeVol -= firstVol;
-	    }
-	}
+
+			if (t_and_s.size() == 100) {
+				final Trade first = t_and_s.removeFirst();
+				final long firstVol = first.getVolume();
+				int firstPrice = first.getPrice();
+				if (first.getDirection().equals(Direction.BUY)) {
+					if (firstVol == state.moLast100BuyTradeMax) {
+						state.moLast100BuyTradeMax = getMaxTrade(Direction.BUY);
+					}
+					if(firstPrice == state.tradeLast100High) {
+						state.tradeLast100High = getMaxTradePrice(Direction.BUY);
+					}
+					state.moLast100BuyTrades--;
+					state.moLast100BuyTradeVol -= firstVol;
+				} else {
+					if (firstVol == state.moLast100SellTradeMax) {
+						state.moLast100SellTradeMax = getMaxTrade(Direction.SELL);
+					}
+					if(firstPrice == state.tradeLast100Low) {
+						state.tradeLast100Low = getMaxTradePrice(Direction.SELL);
+					}
+					state.moLast100SellTradeVol -= firstVol;
+				}
+			}
 
 	if(s.getDirection().equals(Direction.BUY)) {
 	    if(volumeRemoved > state.moLast100BuyTradeMax) {
 		state.moLast100BuyTradeMax = volumeRemoved;
 	    }
+	    if(price > state.tradeLast100High) {
+	    	state.tradeLast100High = price;
+			}
 	    state.moLast100BuyTrades++;
 	    state.moLast100BuyTradeVol += volumeRemoved;	        
 	    state.totalAskVol -= volumeRemoved;    
@@ -288,6 +324,9 @@ public final class LinkedOrderBook implements OrderBook {
 	    if(volumeRemoved > state.moLast100SellTradeMax) {
 		state.moLast100SellTradeMax = volumeRemoved;
 	    }
+	    if(price < state.tradeLast100Low || state.tradeLast100Low == 0) {
+	    	state.tradeLast100Low = price;
+			}
 	    state.moLast100SellTradeVol += volumeRemoved;
 	    state.totalBidVol -= volumeRemoved;
 	    prune(s, bids);
