@@ -17,7 +17,9 @@ along the way, most notably:
 
 Besides the code, the tool does however work and is quite usable.
 
-![limit order book](http://parasec.net/transmission/limit-order-book/limit-order-book.gif)
+<p align="center">
+  <img src="screenshots/animation.gif" alt="limit order book"/>
+</p>
 
 ### Overview
 This is an implementation of a [Limit Order Book](http://en.wikipedia.org/wiki/Order_book_(trading)). It has 2 modes of operation: 1) It
@@ -56,7 +58,7 @@ then to consume from bitstamp's live orders stream:
 In addition, a log-file is created (ob.log) via stderr!. To later parse this log file into a csv, use the parse_ob.sh script:
 
 ```bash
-./ob.sh btcusd 2>ob.csv
+./ob.sh true btcusd 2>ob.csv
 ./parse_ob.sh ob.log ob.csv
 ``` 
 

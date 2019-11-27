@@ -16,44 +16,46 @@ import org.apache.log4j.Level;
 @Deprecated
 public final class PusherOrderBookStream implements EventListener<OrderEvent> {
 
-  public interface Evt {
-    void onUpdate(OrderBook ob);
-  };
+	public interface Evt {
+		void onUpdate(OrderBook ob);
+	}
 
-  private final OrderBook ob = new LinkedOrderBook();
-  private final Evt evt;
+	;
 
-    
-  public PusherOrderBookStream(final Evt evt) {
-    this.evt = evt;
-  }
+	private final OrderBook ob = new LinkedOrderBook();
+	private final Evt evt;
 
-  public void onEvent(final OrderEvent oe) {
-    switch(oe.getState()) {
-      case CREATED: 
-        ob.addOrder(oe); 
-        break;
-      case UPDATED:
-        ob.modOrder(oe);
-        break;
-      case DELETED:
-        ob.delOrder(oe);
-        break;
-    }
-    evt.onUpdate(ob);
-  }
 
-  public static void main(final String[] args) throws Exception {
-    BasicConfigurator.configure();
-    Logger.getRootLogger().setLevel(Level.ERROR);
+	public PusherOrderBookStream(final Evt evt) {
+		this.evt = evt;
+	}
 
-    final Ticker t = new BitstampTicker();
-    t.watchOrders(new EventQueue(new PusherOrderBookStream(new PusherOrderBookStream.Evt() {
-      public void onUpdate(final OrderBook ob) {
-        System.out.print("\u001b[2J\u001b[H");
-        System.out.println(ob);
-        System.err.println(ob.getState().toCsv());
-      }
-    })));
-  }
+	public void onEvent(final OrderEvent oe) {
+		switch (oe.getState()) {
+			case CREATED:
+				ob.addOrder(oe);
+				break;
+			case UPDATED:
+				ob.modOrder(oe);
+				break;
+			case DELETED:
+				ob.delOrder(oe);
+				break;
+		}
+		evt.onUpdate(ob);
+	}
+
+	public static void main(final String[] args) throws Exception {
+		BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.ERROR);
+
+		final Ticker t = new BitstampTicker();
+		t.watchOrders(new EventQueue(new PusherOrderBookStream(new PusherOrderBookStream.Evt() {
+			public void onUpdate(final OrderBook ob) {
+				System.out.print("\u001b[2J\u001b[H");
+				System.out.println(ob);
+				System.err.println(ob.getState().toCsv());
+			}
+		})));
+	}
 }

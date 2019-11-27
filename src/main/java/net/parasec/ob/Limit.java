@@ -1,24 +1,24 @@
 package net.parasec.ob;
 
 public final class Limit {
-    private final int price;
-    private long volume;
-    private int orders;
+	private final int price;
+	private long volume;
+	private int orders;
 
-    private Limit leftSibling;
-    private Limit rightSibling;
+	private Limit leftSibling;
+	private Limit rightSibling;
 
-    /* order queue */
-    private LimitOrder head;
-    private LimitOrder last;
+	/* order queue */
+	private LimitOrder head;
+	private LimitOrder last;
 
-    private long lastAdded;
+	private long lastAdded;
 
-    public Limit(final int price, final Limit leftSibling, final Limit rightSibling) {
-	this.price = price;
-	this.leftSibling = leftSibling;
-	this.rightSibling = rightSibling;
-    }
+	public Limit(final int price, final Limit leftSibling, final Limit rightSibling) {
+		this.price = price;
+		this.leftSibling = leftSibling;
+		this.rightSibling = rightSibling;
+	}
 
 	public long getLastAdded() {
 		return lastAdded;
@@ -29,66 +29,66 @@ public final class Limit {
 	}
 
 	public Limit setVolume(final long volume) {
-	this.volume = volume;
-	return this;
-    }
+		this.volume = volume;
+		return this;
+	}
 
-    public Limit setOrders(final int orders) {
-	this.orders = orders;
-	return this;
-    }
+	public Limit setOrders(final int orders) {
+		this.orders = orders;
+		return this;
+	}
 
-    public Limit setLeftSibling(final Limit leftSibling) {
-	this.leftSibling = leftSibling;
-	return this;
-    }
+	public Limit setLeftSibling(final Limit leftSibling) {
+		this.leftSibling = leftSibling;
+		return this;
+	}
 
-    public Limit setRightSibling(final Limit rightSibling) {
-	this.rightSibling = rightSibling;
-	return this;
-    }
-    
-    public Limit setHead(final LimitOrder head) {
-	this.head = head;
-	return this;
-    }
+	public Limit setRightSibling(final Limit rightSibling) {
+		this.rightSibling = rightSibling;
+		return this;
+	}
 
-    public Limit setLast(final LimitOrder last) {
-	this.last = last;
-	return this;
-    }
+	public Limit setHead(final LimitOrder head) {
+		this.head = head;
+		return this;
+	}
 
-    public int getPrice() {
-	return price;
-    }
+	public Limit setLast(final LimitOrder last) {
+		this.last = last;
+		return this;
+	}
 
-    public long getVolume() {
-	return volume;
-    }
+	public int getPrice() {
+		return price;
+	}
 
-    public int getOrders() {
-	return orders;
-    }
+	public long getVolume() {
+		return volume;
+	}
 
-    public Limit getLeftSibling() {
-	return leftSibling;
-    }
+	public int getOrders() {
+		return orders;
+	}
 
-    public Limit getRightSibling() {
-	return rightSibling;
-    }
+	public Limit getLeftSibling() {
+		return leftSibling;
+	}
 
-    public LimitOrder getHead() {
-	return head;
-    }
+	public Limit getRightSibling() {
+		return rightSibling;
+	}
 
-    public LimitOrder getLast() {
-	return last;
-    }
+	public LimitOrder getHead() {
+		return head;
+	}
 
-    public StringBuilder toCsv(final String dl) {
-	return (new StringBuilder().append(Util.asUSD(price)).append(dl)
-		.append(Util.asBTC(volume))
-	);
-    }
+	public LimitOrder getLast() {
+		return last;
+	}
+
+	public StringBuilder toCsv(final String dl) {
+		return (new StringBuilder().append(Util.asUSD(price)).append(dl)
+				.append(Util.asBTC(volume))
+		);
+	}
 }
