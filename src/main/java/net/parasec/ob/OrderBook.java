@@ -13,5 +13,6 @@ public interface OrderBook {
   void modOrder(OrderEvent oe);
   void delOrder(OrderEvent oe);
 
+  void setConsoleHeight(int height);
 }
 

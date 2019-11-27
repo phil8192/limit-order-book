@@ -48,7 +48,9 @@ This has only ever been run on a 1920x1200 display; will fix this later. For now
 then to consume from bitstamp's live orders stream:
 
 ```
-./ob.sh btcusd 2>/dev/null
+./ob.sh true btcusd 2>/dev/null # real time (continuous scroll)
+./ob.sh false btcusd 2>/dev/null # update screen once per second.
+./ob.sh true 1>/dev/null 2>state.csv # save ob state to csv.
 ```
 
 In addition, a log-file is created (ob.log) via stderr!. To later parse this log file into a csv, use the parse_ob.sh script:

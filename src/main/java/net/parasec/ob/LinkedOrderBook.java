@@ -22,7 +22,7 @@ public final class LinkedOrderBook implements OrderBook {
 	private final ArrayDeque<MarketOrder> lastOrders = new ArrayDeque<MarketOrder>(100);
 
 
-	private final int depth = 43;
+	private int depth = 43;
 	//private final int depth = 114;
 	// last 100 t&s (trades) derived from order book.
 	private final ArrayDeque<Trade> t_and_s = new ArrayDeque<Trade>(100);
@@ -847,6 +847,11 @@ public final class LinkedOrderBook implements OrderBook {
 					ansi.a(Util.asUSD(bidLevel.getPrice())).reset();
 		}
 		return "                                                       ";
+	}
+
+	@Override
+	public void setConsoleHeight(int height) {
+		this.depth = height - 13; // - state indicators + 1
 	}
 
 	public String toString() {

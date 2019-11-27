@@ -11,7 +11,6 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 import org.fusesource.jansi.AnsiConsole;
-import org.fusesource.jansi.AnsiRenderer;
 
 import static org.fusesource.jansi.Ansi.*;
 
@@ -21,11 +20,12 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 
 	private String venue;
 	private String symbol;
+	private boolean real_time;
 
-
-	public OrderBookStream(String venue, String symbol) {
+	public OrderBookStream(String venue, String symbol, boolean real_time) {
 		this.venue = venue;
 		this.symbol = symbol;
+		this.real_time = real_time;
 	}
 
 	public OrderBook getOb() {
@@ -66,8 +66,9 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 				state = net.parasec.trading.ticker.core.wire.OrderEvent.State.DELETED;
 				ob.delOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(state, direction, symbol, venue, localTs, orderInfo));
 		}
-		AnsiConsole.system_out.println(ansi().a(ob).reset());
-		//System.out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
+		if(real_time) {
+			AnsiConsole.system_out.println(ansi().a(ob).reset());
+		}
 		System.err.println(ob.getState().toCsv());
 	}
 
@@ -76,15 +77,20 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 		Logger.getRootLogger().setLevel(Level.ERROR);
 		AnsiConsole.systemInstall();
 
-		String symbol = args[0];
-		OrderBookStream orderBookStream = new OrderBookStream("bitstamp", symbol);
+		int console_height = Integer.parseInt(args[0]);
+		boolean real_time = Boolean.parseBoolean((args[1]));
+		String symbol = args[2];
+		OrderBookStream orderBookStream = new OrderBookStream("bitstamp", symbol, real_time);
+		orderBookStream.getOb().setConsoleHeight(console_height);
 		Client client = new BitstampClient();
 		String subscriptionId = client.subscribeOrders(symbol, orderBookStream);
 		try {
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
 				Thread.sleep(1000);
-				//AnsiConsole.system_out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
+				if(!real_time) {
+					AnsiConsole.system_out.println(ansi().eraseScreen(Erase.ALL).a(ob).reset());
+				}
 			}
 		} catch (InterruptedException e) {
 		}
