@@ -52,14 +52,13 @@ then to consume from bitstamp's live orders stream:
 ```
 ./ob.sh true btcusd 2>/dev/null # real time (continuous scroll)
 ./ob.sh false btcusd 2>/dev/null # update screen once per second.
-./ob.sh true 1>/dev/null 2>state.csv # save ob state to csv.
+./ob.sh true 1>/dev/null 2>state.log # save ob state to a log file.
 ```
 
-In addition, a log-file is created (ob.log) via stderr!. To later parse this log file into a csv, use the parse_ob.sh script:
+To later parse this log file into a csv, use the `parse_ob.sh` script:
 
 ```bash
-./ob.sh true btcusd 2>ob.csv
-./parse_ob.sh ob.log ob.csv
+./parse_ob.sh state.log ob.csv
 ``` 
 
 (details/use of this .csv will be discussed in another project). head -1 the resulting .csv file to see the (hopefully) self descriptive 
@@ -68,24 +67,6 @@ header/field names:
 ```
 event,ts,last_trade_ts,last_trade_price,last_trade_volume,last_trade_buy_or_sell,last_trade_taker,last_trade_maker,active_buys,active_sells,outstanding_buy_volume,outstanding_sell_volume,buy_impact,sell_impact,last_100_mo_buys,last_100_mo_buy_volume,last_100_mo_buy_max_volume,last_100_mo_sell_volume,last_100_mo_sell_max_volume,last_100_trade_buys,last_100_trade_buy_volume,last_100_trade_buy_trade_max,last_100_trade_sell_volume,last_100_trade_sell_max_volume,best_bid_price,best_bid_volume,best_ask_price,best_ask_volume,bid_percentile_vwap_1,bid_percentile_orders_1,bid_percentile_priceLevel_1,bid_percentile_volume_1,bid_percentile_vwap_2,bid_percentile_orders_2,bid_percentile_priceLevel_2,bid_percentile_volume_2,bid_percentile_vwap_3,bid_percentile_orders_3,bid_percentile_priceLevel_3,bid_percentile_volume_3,bid_percentile_vwap_4,bid_percentile_orders_4,bid_percentile_priceLevel_4,bid_percentile_volume_4,bid_percentile_vwap_5,bid_percentile_orders_5,bid_percentile_priceLevel_5,bid_percentile_volume_5,bid_percentile_vwap_6,bid_percentile_orders_6,bid_percentile_priceLevel_6,bid_percentile_volume_6,bid_percentile_vwap_7,bid_percentile_orders_7,bid_percentile_priceLevel_7,bid_percentile_volume_7,bid_percentile_vwap_8,bid_percentile_orders_8,bid_percentile_priceLevel_8,bid_percentile_volume_8,bid_percentile_vwap_9,bid_percentile_orders_9,bid_percentile_priceLevel_9,bid_percentile_volume_9,bid_percentile_vwap_10,bid_percentile_orders_10,bid_percentile_priceLevel_10,bid_percentile_volume_10,bid_percentile_vwap_11,bid_percentile_orders_11,bid_percentile_priceLevel_11,bid_percentile_volume_11,bid_percentile_vwap_12,bid_percentile_orders_12,bid_percentile_priceLevel_12,bid_percentile_volume_12,bid_percentile_vwap_13,bid_percentile_orders_13,bid_percentile_priceLevel_13,bid_percentile_volume_13,bid_percentile_vwap_14,bid_percentile_orders_14,bid_percentile_priceLevel_14,bid_percentile_volume_14,bid_percentile_vwap_15,bid_percentile_orders_15,bid_percentile_priceLevel_15,bid_percentile_volume_15,bid_percentile_vwap_16,bid_percentile_orders_16,bid_percentile_priceLevel_16,bid_percentile_volume_16,bid_percentile_vwap_17,bid_percentile_orders_17,bid_percentile_priceLevel_17,bid_percentile_volume_17,bid_percentile_vwap_18,bid_percentile_orders_18,bid_percentile_priceLevel_18,bid_percentile_volume_18,bid_percentile_vwap_19,bid_percentile_orders_19,bid_percentile_priceLevel_19,bid_percentile_volume_19,bid_percentile_vwap_20,bid_percentile_orders_20,bid_percentile_priceLevel_20,bid_percentile_volume_20,ask_percentile_vwap_1,ask_percentile_orders_1,ask_percentile_priceLevel_1,ask_percentile_volume_1,ask_percentile_vwap_2,ask_percentile_orders_2,ask_percentile_priceLevel_2,ask_percentile_volume_2,ask_percentile_vwap_3,ask_percentile_orders_3,ask_percentile_priceLevel_3,ask_percentile_volume_3,ask_percentile_vwap_4,ask_percentile_orders_4,ask_percentile_priceLevel_4,ask_percentile_volume_4,ask_percentile_vwap_5,ask_percentile_orders_5,ask_percentile_priceLevel_5,ask_percentile_volume_5,ask_percentile_vwap_6,ask_percentile_orders_6,ask_percentile_priceLevel_6,ask_percentile_volume_6,ask_percentile_vwap_7,ask_percentile_orders_7,ask_percentile_priceLevel_7,ask_percentile_volume_7,ask_percentile_vwap_8,ask_percentile_orders_8,ask_percentile_priceLevel_8,ask_percentile_volume_8,ask_percentile_vwap_9,ask_percentile_orders_9,ask_percentile_priceLevel_9,ask_percentile_volume_9,ask_percentile_vwap_10,ask_percentile_orders_10,ask_percentile_priceLevel_10,ask_percentile_volume_10,ask_percentile_vwap_11,ask_percentile_orders_11,ask_percentile_priceLevel_11,ask_percentile_volume_11,ask_percentile_vwap_12,ask_percentile_orders_12,ask_percentile_priceLevel_12,ask_percentile_volume_12,ask_percentile_vwap_13,ask_percentile_orders_13,ask_percentile_priceLevel_13,ask_percentile_volume_13,ask_percentile_vwap_14,ask_percentile_orders_14,ask_percentile_priceLevel_14,ask_percentile_volume_14,ask_percentile_vwap_15,ask_percentile_orders_15,ask_percentile_priceLevel_15,ask_percentile_volume_15,ask_percentile_vwap_16,ask_percentile_orders_16,ask_percentile_priceLevel_16,ask_percentile_volume_16,ask_percentile_vwap_17,ask_percentile_orders_17,ask_percentile_priceLevel_17,ask_percentile_volume_17,ask_percentile_vwap_18,ask_percentile_orders_18,ask_percentile_priceLevel_18,ask_percentile_volume_18,ask_percentile_vwap_19,ask_percentile_orders_19,ask_percentile_priceLevel_19,ask_percentile_volume_19,ask_percentile_vwap_20,ask_percentile_orders_20,ask_percentile_priceLevel_20,ask_percentile_volume_20,lowest_price,highest_price,total_bids,total_asks,total_bid_volume,total_ask_volume,last_100_cancelled_bids,last_100_cancelled_bid_volume,last_100_cancelled_bid_max_volume,last_100_cancelled_ask_volume,last_100_cancelled_ask_max_volume,total_mo_buy_vol,total_mo_buy,total_mo_sell_vol,total_mo_sell,b1,b2,b4,b8,b16,b32,b64,b128,b256,b512,b1024,s1,s2,s4,s8,s16,s32,s64,s128,s256,s512,s1024
 ```
-
-If the raw order stream has been saved to a file: it is possible to reconstruct the order book as follows:
-
-```bash
-./replay.sh <orders.log> <delay> <boolean: print-order-book>
-```
-
-where orders.log contains a raw log of the quote stream. Note that, this can also be extracted from the log (ob.log) above as follows:
-```bash
-grep "{" x.log |grep -v "trade" >orders.log
-```
-
-```bash
-head -3 orders.log
-order_created {"price": "814.14", "amount": "0.16100000", "datetime": "1390827243", "id": 114150, "order_type": 1}
-order_deleted {"price": "814.54", "amount": "0.01615447", "datetime": "1390827240", "id": 114148, "order_type": 0}
-order_changed {"price": "814.14", "amount": "0.14485592", "datetime": "1390827243", "id": 114150, "order_type": 1}
-```   
 
 ## Order book
 Divided into 2 sections, the left hand side of the book shows the depth of BUY limit orders (bids), while the right hand side shows the
