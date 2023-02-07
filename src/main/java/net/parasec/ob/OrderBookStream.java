@@ -7,9 +7,6 @@ import net.parasec.trading.bitstampws.OrderEvent;
 
 import net.parasec.trading.ticker.core.wire.Direction;
 import net.parasec.trading.ticker.core.wire.OrderInfo;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
 import org.fusesource.jansi.AnsiConsole;
 
 import static org.fusesource.jansi.Ansi.*;
@@ -73,8 +70,6 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 	}
 
 	public static void main(final String[] args) throws Exception {
-		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.ERROR);
 		AnsiConsole.systemInstall();
 
 		int console_height = Integer.parseInt(args[0]);
@@ -96,14 +91,14 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 
 		long ts = System.currentTimeMillis() - 86400000;
 		for (HttpLob.Order ask : backFillLob.asks) {
-			if(Double.parseDouble(ask.price) > 100000) {
+			if (Double.parseDouble(ask.price) > 100000) {
 				continue;
 			}
 			String exchangeOrderId = ask.orderId;
 			int limitPrice = Util.asCents(Double.parseDouble(ask.price));
 			long volume = Util.asSatoshi(Double.parseDouble(ask.volume));
 			OrderInfo orderInfo = new OrderInfo(exchangeOrderId, limitPrice, volume, ts);
-			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED,Direction.SELL, symbol, "bitstamp", ts, orderInfo));
+			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED, Direction.SELL, symbol, "bitstamp", ts, orderInfo));
 		}
 
 		for (HttpLob.Order bid : backFillLob.bids) {
@@ -111,7 +106,7 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 			int limitPrice = Util.asCents(Double.parseDouble(bid.price));
 			long volume = Util.asSatoshi(Double.parseDouble(bid.volume));
 			OrderInfo orderInfo = new OrderInfo(exchangeOrderId, limitPrice, volume, ts);
-			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED,Direction.BUY, symbol, "bitstamp", ts, orderInfo));
+			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED, Direction.BUY, symbol, "bitstamp", ts, orderInfo));
 		}
 		orderBookStream.getOb().getState().event = origEvent;
 
@@ -127,4 +122,3 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 		}
 	}
 }
-

@@ -43,7 +43,7 @@ public final class LinkedOrderBook implements OrderBook {
 	private void purgeStaleBuyMos(long exchangeTs) {
 		boolean purged = false;
 		for (Iterator<Map.Entry<String, MarketOrder>> it
-				 = buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+			 = buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 			OrderInfo oi = it.next().getValue().getOrder();
 			if (exchangeTs - oi.getExchangeTimestamp() > 60000) {
 				state.moActiveBuys--;
@@ -59,7 +59,7 @@ public final class LinkedOrderBook implements OrderBook {
 	private void purgeStaleSellMos(long exchangeTs) {
 		boolean purged = false;
 		for (Iterator<Map.Entry<String, MarketOrder>> it
-				 = sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+			 = sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 			OrderInfo oi = it.next().getValue().getOrder();
 			if (exchangeTs - oi.getExchangeTimestamp() > 60000) {
 				state.moActiveSells--;
@@ -135,7 +135,7 @@ public final class LinkedOrderBook implements OrderBook {
 			// if market order target price < best ask, hand market order over
 			// to order book as a limit order.
 			for (final Iterator<Map.Entry<String, MarketOrder>> it
-					 = buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+				 = buyMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 				final MarketOrder mo = it.next().getValue();
 				if (pruneBuyMo(mo)) {
 					it.remove();
@@ -148,7 +148,7 @@ public final class LinkedOrderBook implements OrderBook {
 			state.bestBid = l;
 			// best bid has changed. same logic as ask.
 			for (final Iterator<Map.Entry<String, MarketOrder>> it
-					 = sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
+				 = sellMarketOrders.entrySet().iterator(); it.hasNext(); ) {
 				final MarketOrder mo = it.next().getValue();
 				if (pruneSellMo(mo)) {
 					it.remove();

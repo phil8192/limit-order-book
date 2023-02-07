@@ -33,7 +33,7 @@ public class HttpLob {
 		}
 	}
 
-	 static class Lob {
+	static class Lob {
 		List<Order> asks;
 		List<Order> bids;
 
