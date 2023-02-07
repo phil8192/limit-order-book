@@ -84,6 +84,37 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 		orderBookStream.getOb().setConsoleHeight(console_height);
 		Client client = new BitstampClient();
 		String subscriptionId = client.subscribeOrders(symbol, orderBookStream);
+
+		// after 10 seconds, back-fill the lob using
+		// https://www.bitstamp.net/api/v2/order_book/btcusd?group=2
+		// .. not thread safe ..
+		Thread.sleep(10000);
+		long origEvent = orderBookStream.getOb().getState().event;
+
+		HttpLob httpLob = new HttpLob();
+		HttpLob.Lob backFillLob = httpLob.getLob(symbol);
+
+		long ts = System.currentTimeMillis() - 86400000;
+		for (HttpLob.Order ask : backFillLob.asks) {
+			if(Double.parseDouble(ask.price) > 100000) {
+				continue;
+			}
+			String exchangeOrderId = ask.orderId;
+			int limitPrice = Util.asCents(Double.parseDouble(ask.price));
+			long volume = Util.asSatoshi(Double.parseDouble(ask.volume));
+			OrderInfo orderInfo = new OrderInfo(exchangeOrderId, limitPrice, volume, ts);
+			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED,Direction.SELL, symbol, "bitstamp", ts, orderInfo));
+		}
+
+		for (HttpLob.Order bid : backFillLob.bids) {
+			String exchangeOrderId = bid.orderId;
+			int limitPrice = Util.asCents(Double.parseDouble(bid.price));
+			long volume = Util.asSatoshi(Double.parseDouble(bid.volume));
+			OrderInfo orderInfo = new OrderInfo(exchangeOrderId, limitPrice, volume, ts);
+			orderBookStream.getOb().addOrder(new net.parasec.trading.ticker.core.wire.OrderEvent(net.parasec.trading.ticker.core.wire.OrderEvent.State.CREATED,Direction.BUY, symbol, "bitstamp", ts, orderInfo));
+		}
+		orderBookStream.getOb().getState().event = origEvent;
+
 		try {
 			OrderBook ob = orderBookStream.getOb();
 			while (true) {
