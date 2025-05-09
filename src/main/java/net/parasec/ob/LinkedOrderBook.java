@@ -534,8 +534,8 @@ public final class LinkedOrderBook implements OrderBook {
 				state.sellImpact = bids.getMarketImpact(State.impactPoints);
 			}
 		} else {
-			if (priceIdx >= 10000000) {
-				// ignore orders to sell >= 100k.
+			if (priceIdx >= 100000000) {
+				// ignore orders to sell >= 1m.
 				return;
 			}
 
@@ -817,7 +817,7 @@ public final class LinkedOrderBook implements OrderBook {
 				ansi = ansi();
 			else
 				ansi = ansi().fgBrightBlack();
-			return ansi.a(Util.asUSD(askLevel.getPrice())).reset() + "\t" +
+			return ansi.a(askLevel.getPrice()).reset() + "\t" +
 					Util.asBTC(askLevel.getVolume()) + "\t" +
 					askLevel.getOrders() + "\t" +
 					Util.asBTC(volSum) + "\t" +
@@ -844,7 +844,7 @@ public final class LinkedOrderBook implements OrderBook {
 					Util.asBTC(volSum) + "\t" +
 					bidLevel.getOrders() + "\t" +
 					Util.asBTC(bidLevel.getVolume()) + "\t" +
-					ansi.a(Util.asUSD(bidLevel.getPrice())).reset();
+					ansi.a(bidLevel.getPrice()).reset();
 		}
 		return "                                                       ";
 	}
@@ -891,7 +891,7 @@ public final class LinkedOrderBook implements OrderBook {
 			if (t_and_s_it.hasNext()) {
 				final Trade sale = t_and_s_it.next();
 				//sb.append(" ").append(Util.tradeToString(sale));
-				sb.append(" ").append(ansi().bg(sale.getDirection().equals(Direction.BUY) ? GREEN : RED).fgBright(WHITE).a(Util.asBTC(sale.getVolume())).a(" @ ").a(Util.asUSD(sale.getPrice())).reset());
+				sb.append(" ").append(ansi().bg(sale.getDirection().equals(Direction.BUY) ? GREEN : RED).fgBright(WHITE).a(Util.asBTC(sale.getVolume())).a(" @ ").a(sale.getPrice()).reset());
 			}
 			sb.append("\n");
 		}

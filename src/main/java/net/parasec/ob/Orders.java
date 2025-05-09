@@ -24,8 +24,7 @@ public final class Orders {
 	}
 
 	// limit orders are stored in sparse array for fast access. index is USD*100,
-	// max value = 99999.99 USD.
-	private final Limit[] sparseLevels = new Limit[10000000];
+	private final Limit[] sparseLevels = new Limit[1000000];
 
 	// the current best bid or ask.
 	private Limit best = null;
@@ -415,28 +414,29 @@ public final class Orders {
 
 	// ask side.
 	// return: priceIdx if level exists there, or next up - 1
-	public int snapLevel(final int priceIdx) {
-		return snapLevel(priceIdx, -1);
-	}
 
-	public int snapLevel(final int priceIdx, final int ignorePrice) {
-
-		if (best == null)
-			return priceIdx;
-
-		final Limit[] sparseLevels = this.sparseLevels;
-		int i = priceIdx;
-
-		Limit l = sparseLevels[i];
-		while (i < 99999 && (l == null || (l.getPrice() == ignorePrice && l.getOrders() == 1))) {
-			l = sparseLevels[++i];
-		}
-
-		return (i == priceIdx ? priceIdx : i - 1);
-	}
-
-	public Limit[] getLevels() {
-		return sparseLevels;
-	}
+//	public int snapLevel(final int priceIdx) {
+//		return snapLevel(priceIdx, -1);
+//	}
+//
+//	public int snapLevel(final int priceIdx, final int ignorePrice) {
+//
+//		if (best == null)
+//			return priceIdx;
+//
+//		final Limit[] sparseLevels = this.sparseLevels;
+//		int i = priceIdx;
+//
+//		Limit l = sparseLevels[i];
+//		while (i < 99999 && (l == null || (l.getPrice() == ignorePrice && l.getOrders() == 1))) {
+//			l = sparseLevels[++i];
+//		}
+//
+//		return (i == priceIdx ? priceIdx : i - 1);
+//	}
+//
+//	public Limit[] getLevels() {
+//		return sparseLevels;
+//	}
 
 }

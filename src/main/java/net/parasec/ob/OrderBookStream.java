@@ -30,6 +30,9 @@ public final class OrderBookStream implements BitstampMessageHandler<OrderEvent>
 	}
 
 	private int getLimitPrice(double price, String symbol) {
+		if(symbol.equals("btcusd")) {
+			return (int) price;
+		}
 		return Util.asCents(price);
 	}
 
